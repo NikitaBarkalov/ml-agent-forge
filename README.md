@@ -19,5 +19,5 @@ System to solve various business tasks with different data types
 3. **Install dependencies**
 
     ```bash
-    uv sync --project backend
+    uv sync
     ```
