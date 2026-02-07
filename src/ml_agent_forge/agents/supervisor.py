@@ -28,7 +28,7 @@ def _get_llm():
     if not api_key:
         raise ValueError("ANTHROPIC_API_KEY must be set in environment")
     return ChatAnthropic(
-        model="claude-3-5-sonnet-latest",
+        model="claude-haiku-4-5-20251001",
         api_key=api_key,
         temperature=0,
     )

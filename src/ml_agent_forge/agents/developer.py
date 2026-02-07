@@ -19,7 +19,7 @@ def _get_llm():
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         raise ValueError("ANTHROPIC_API_KEY must be set in environment")
-    return ChatAnthropic(model="claude-3-5-sonnet-latest", api_key=api_key, temperature=0)
+    return ChatAnthropic(model="claude-haiku-4-5-20251001", api_key=api_key, temperature=0)
 
 
 def _create_sandbox():
