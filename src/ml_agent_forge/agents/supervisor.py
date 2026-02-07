@@ -4,6 +4,7 @@ import os
 from typing import Literal
 
 from langchain_anthropic import ChatAnthropic
+from structlog import get_logger
 from langchain_core.messages import HumanMessage, SystemMessage
 # try:
 #     from langchain_core.pydantic_v1 import BaseModel, Field
@@ -11,6 +12,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
 from src.ml_agent_forge.state import GraphState
+from src.ml_agent_forge.utils.logger import truncate_for_log
 
 
 class SupervisorDecision(BaseModel):
@@ -44,10 +46,19 @@ def supervisor_node(state: GraphState) -> dict:
     - If analysis is done -> Reporter.
     - After Reporter or when done -> FINISH.
     """
+    user_input = state.get("user_input") or {}
+    task = user_input.get("task", "")
+    next_agent = (state.get("next_agent") or "").strip()
+    get_logger().info(
+        "Agent started",
+        agent="Supervisor",
+        task=task[:200] + "..." if len(task) > 200 else task,
+        next_agent=next_agent or "(initial routing)",
+    )
+
     llm = _get_llm()
     structured_llm = llm.with_structured_output(SupervisorDecision)
 
-    user_input = state.get("user_input") or {}
     data_profile = (state.get("data_profile") or "").strip()
     plan = (state.get("plan") or "").strip()
     code_context = state.get("code_context") or []
@@ -76,7 +87,18 @@ Respond with next_agent and a short reason."""
         SystemMessage(content="You output only valid JSON-like structured decisions. Be deterministic."),
         HumanMessage(content=prompt),
     ]
+    get_logger().debug(
+        "LLM invoke (Supervisor)",
+        agent="Supervisor",
+        prompt_truncated=truncate_for_log(prompt, 800),
+    )
     decision = structured_llm.invoke(messages)
+    get_logger().info(
+        "LLM response (Supervisor)",
+        agent="Supervisor",
+        next_agent=decision.next_agent,
+        reason=truncate_for_log(decision.reason, 300),
+    )
 
     return {
         "next_agent": decision.next_agent,

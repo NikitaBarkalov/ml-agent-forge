@@ -5,10 +5,12 @@ import base64
 from pathlib import Path
 
 from langchain_anthropic import ChatAnthropic
+from structlog import get_logger
 from langchain_core.messages import HumanMessage, SystemMessage
 from e2b_code_interpreter import Sandbox
 
 from src.ml_agent_forge.state import GraphState
+from src.ml_agent_forge.utils.logger import truncate_for_log
 
 MAX_CORRECTION_ATTEMPTS = 3
 SANDBOX_DATA_DIR = "/home/user/data"
@@ -110,6 +112,14 @@ def developer_node(state: GraphState) -> dict:
     plan = state.get("plan") or ""
     code_context = list(state.get("code_context") or [])
     file_paths = user_input.get("file_paths") or []
+    task = user_input.get("task", "")
+    get_logger().info(
+        "Agent started",
+        agent="Developer",
+        task=task[:200] + "..." if len(task) > 200 else task,
+        plan_len=len(plan),
+        code_context_entries=len(code_context),
+    )
 
     try:
         with _create_sandbox() as sandbox:
@@ -153,8 +163,21 @@ Generate a single Python script that implements the plan. Save plots to /home/us
                         HumanMessage(content=code_prompt),
                         HumanMessage(content=f"Previous code failed. Error:\n{last_error}\n\nProvide corrected code only."),
                     ]
+                full_prompt = code_prompt + (f"\n\n[Correction request: {last_error}]" if attempt > 0 else "")
+                get_logger().debug(
+                    "LLM invoke (Developer)",
+                    agent="Developer",
+                    attempt=attempt + 1,
+                    prompt_truncated=truncate_for_log(full_prompt, 800),
+                )
                 response = llm.invoke(messages)
                 raw = response.content if hasattr(response, "content") else str(response)
+                get_logger().info(
+                    "LLM response (Developer)",
+                    agent="Developer",
+                    attempt=attempt + 1,
+                    code_truncated=truncate_for_log(raw, 500),
+                )
                 code = raw.strip()
                 if code.startswith("```"):
                     lines = code.split("\n")

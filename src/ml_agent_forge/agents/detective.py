@@ -3,17 +3,10 @@
 import os
 from pathlib import Path
 
-from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import HumanMessage, SystemMessage
+from structlog import get_logger
+from langchain_core.messages import HumanMessage
 
 from src.ml_agent_forge.state import GraphState
-
-
-def _get_llm():
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise ValueError("ANTHROPIC_API_KEY must be set in environment")
-    return ChatAnthropic(model="claude-haiku-4-5-20251001", api_key=api_key, temperature=0)
 
 
 def _analyze_file(file_path: str) -> str:
@@ -67,6 +60,13 @@ def detective_node(state: GraphState) -> dict:
     """Analyze files from user_input['file_paths'] and set data_profile."""
     user_input = state.get("user_input") or {}
     file_paths = user_input.get("file_paths") or []
+    task = user_input.get("task", "")
+    get_logger().info(
+        "Agent started",
+        agent="DataDetective",
+        task=task[:200] + "..." if len(task) > 200 else task,
+        file_paths=file_paths,
+    )
     if not file_paths:
         profile = "No file paths provided."
     else:

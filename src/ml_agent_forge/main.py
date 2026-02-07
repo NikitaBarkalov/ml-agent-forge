@@ -38,6 +38,12 @@ def run(
 
 
 def main():
+    from src.ml_agent_forge.utils.logger import configure_logging, get_logger
+
+    configure_logging()
+    log = get_logger()
+    log.info("Pipeline started", status = 'started')
+
     parser = argparse.ArgumentParser(description="Run ML/BA multi-agent pipeline")
     parser.add_argument("--business", type=str, default="E-commerce conversion analysis")
     parser.add_argument("--task", type=str, default="Analyze conversion funnel and suggest improvements.")
@@ -63,9 +69,10 @@ def main():
     if not os.getenv("E2B_API_KEY") and file_paths:
         print("Warning: E2B_API_KEY not set. Developer node (code execution) will fail.")
 
-    print("Running pipeline...")
+    log.info("Running pipeline", business=args.business, task=args.task[:100], files=file_paths)
     state = run(args.business, args.task, file_paths)
     report = state.get("final_report") or ""
+    log.info("Pipeline finished", status="pipeline_end", report_len=len(report))
     print("\n" + "=" * 60 + "\nFINAL REPORT\n" + "=" * 60 + "\n")
     print(report)
     return 0
