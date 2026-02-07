@@ -92,5 +92,8 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 
+[dependency-groups]
+dev = ["go-task-bin>=3.45.5"]
+
 [tool.setuptools.packages.find]
 where = ["src"]

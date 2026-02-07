@@ -1,0 +1,7 @@
+version: "3"
+
+tasks:
+  demoweb:
+    desc: "Run the web application"
+    cmds:
+      - uv run python -m src.ml_agent_forge.server
