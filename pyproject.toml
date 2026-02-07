@@ -36,7 +36,17 @@ dependencies = [
 
     # --- Logging / observability ---
     "structlog>=24.1.0",
+
+    # --- Web server ---
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "python-multipart>=0.0.12",
+    "websockets>=14.0",
 ]
+
+[project.scripts]
+ml-agent-forge = "src.ml_agent_forge.main:main"
+ml-agent-forge-server = "src.ml_agent_forge.server:main"
 
 [project.optional-dependencies]
 dev = [

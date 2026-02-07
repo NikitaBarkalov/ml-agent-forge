@@ -1,0 +1,231 @@
+/* ML Agent Forge - Dark mode UI */
+
+:root {
+    --bg-dark: #0d1117;
+    --bg-card: #161b22;
+    --bg-input: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --accent-hover: #79b8ff;
+    --success: #3fb950;
+    --warning: #d29922;
+    --error: #f85149;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+.app {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.tagline {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-top: 0.25rem;
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.card h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+}
+
+.field {
+    margin-bottom: 1rem;
+}
+
+.field label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+}
+
+textarea {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9rem;
+    resize: vertical;
+}
+
+textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.file-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+input[type="file"] {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+input[type="file"]::file-selector-button {
+    padding: 0.4rem 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.file-name {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.btn {
+    padding: 0.6rem 1.25rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Progress section */
+.status-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.status-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.status-value {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.status-value.running {
+    color: var(--accent);
+}
+
+.status-value.done {
+    color: var(--success);
+}
+
+.status-value.error {
+    color: var(--error);
+}
+
+.log-window {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    height: 280px;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.8rem;
+}
+
+.log-window pre {
+    margin: 0;
+    padding: 1rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.log-line {
+    margin-bottom: 0.2rem;
+}
+
+.log-line .ts {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.log-line .agent {
+    color: var(--accent);
+}
+
+.log-line .level-info { color: var(--text); }
+.log-line .level-debug { color: var(--text-muted); }
+.log-line .level-warning { color: var(--warning); }
+.log-line .level-error { color: var(--error); }
+
+/* Results section */
+.results-section.hidden {
+    display: none;
+}
+
+.downloads {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.downloads .btn {
+    background: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.downloads .btn:hover {
+    background: var(--border);
+}

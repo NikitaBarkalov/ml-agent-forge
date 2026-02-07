@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Agent Forge</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <h1>ML Agent Forge</h1>
+            <p class="tagline">Multi-agent ML & Business Analysis Pipeline</p>
+        </header>
+
+        <main class="main">
+            <section class="card input-section">
+                <h2>Input</h2>
+                <form id="run-form">
+                    <div class="field">
+                        <label for="business-context">Business Context</label>
+                        <textarea id="business-context" rows="3" placeholder="e.g. E-commerce conversion analysis for a retail platform...">E-commerce conversion analysis</textarea>
+                    </div>
+                    <div class="field">
+                        <label for="task">Task</label>
+                        <textarea id="task" rows="3" placeholder="e.g. Analyze conversion funnel and suggest improvements.">Analyze conversion funnel and suggest improvements.</textarea>
+                    </div>
+                    <div class="field">
+                        <label for="file-input">Dataset (CSV or Excel)</label>
+                        <div class="file-row">
+                            <input type="file" id="file-input" accept=".csv,.xlsx,.xls">
+                            <span id="file-name" class="file-name">No file selected</span>
+                        </div>
+                    </div>
+                    <button type="submit" id="run-btn" class="btn btn-primary">Run Pipeline</button>
+                </form>
+            </section>
+
+            <section class="card progress-section" id="progress-section">
+                <h2>Live Progress</h2>
+                <div class="status-bar" id="status-bar">
+                    <span class="status-label">Status:</span>
+                    <span class="status-value" id="status-value">Idle</span>
+                </div>
+                <div class="log-window" id="log-window">
+                    <pre id="log-content"></pre>
+                </div>
+            </section>
+
+            <section class="card results-section hidden" id="results-section">
+                <h2>Results</h2>
+                <div class="downloads" id="downloads"></div>
+            </section>
+        </main>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>

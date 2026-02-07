@@ -2,10 +2,63 @@
 
 import logging
 import sys
+from contextvars import ContextVar
 from pathlib import Path
+from queue import Empty, Queue
 
 import structlog
 from structlog.stdlib import ProcessorFormatter
+
+# Context var for session-scoped log queue (WebSocket streaming)
+_log_queue: ContextVar[Queue | None] = ContextVar("log_queue", default=None)
+
+
+def set_log_queue(queue: Queue | None) -> None:
+    """Set the current session's log queue for WebSocket streaming."""
+    _log_queue.set(queue)
+
+
+def get_log_queue() -> Queue | None:
+    """Get the current session's log queue, if any."""
+    try:
+        return _log_queue.get()
+    except LookupError:
+        return None
+
+
+class WebSocketLogHandler(logging.Handler):
+    """Logging handler that pushes events to the current session's queue for WebSocket streaming."""
+
+    _STANDARD_ATTRS = {
+        "name", "msg", "args", "created", "filename", "funcName", "levelname",
+        "levelno", "lineno", "module", "msecs", "pathname", "process", "processName",
+        "relativeCreated", "stack_info", "exc_info", "exc_text", "thread", "threadName",
+        "message", "taskName",
+    }
+
+    def emit(self, record: logging.LogRecord) -> None:
+        queue = get_log_queue()
+        if queue is None:
+            return
+        try:
+            # Build message from record
+            msg = record.getMessage()
+            # Extract structlog/extra fields (agent, task, etc.)
+            extra = {
+                k: v for k, v in record.__dict__.items()
+                if k not in self._STANDARD_ATTRS and not k.startswith("_")
+            }
+            payload = {
+                "type": "log",
+                "level": record.levelname.lower(),
+                "message": msg,
+                "agent": extra.get("agent"),
+                "timestamp": getattr(record, "timestamp", None),
+            }
+            payload.update({k: v for k, v in extra.items() if k not in ("agent", "timestamp")})
+            queue.put_nowait(payload)
+        except Exception:
+            self.handleError(record)
 
 
 def configure_logging(log_file: str | Path = "pipeline.log") -> None:
@@ -60,11 +113,17 @@ def configure_logging(log_file: str | Path = "pipeline.log") -> None:
     file_handler = logging.FileHandler(log_path, encoding="utf-8")
     file_handler.setFormatter(file_formatter)
 
+    # WebSocket streaming handler (pushes to queue when set via set_log_queue)
+    ws_handler = WebSocketLogHandler()
+    ws_handler.setLevel(logging.DEBUG)
+    ws_handler.setFormatter(console_formatter)  # format not used for queue, but required
+
     # Root logger
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
     root_logger.addHandler(console_handler)
     root_logger.addHandler(file_handler)
+    root_logger.addHandler(ws_handler)
     root_logger.setLevel(logging.DEBUG)
 
 
