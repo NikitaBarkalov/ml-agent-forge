@@ -69,10 +69,22 @@ def _save_outputs(session_id: str, state: dict) -> dict[str, str]:
     # Save pipeline code from code_context
     code_context = state.get("code_context") or []
     code_parts = []
+    import base64
     for i, ctx in enumerate(code_context):
         c = ctx.get("code")
         if c:
             code_parts.append(f"# --- Run {i + 1} ---\n{c}\n")
+        
+        # Save artifacts (e.g. plots)
+        artifacts = ctx.get("artifacts") or []
+        for j, art in enumerate(artifacts):
+            art_path_raw = art.get("path", "")
+            content_b64 = art.get("content_base64", "")
+            if content_b64:
+                # Use the filename from the sandbox path or a generated one
+                name = Path(art_path_raw).name if art_path_raw else f"artifact_{i}_{j}.png"
+                (out_dir / name).write_bytes(base64.b64decode(content_b64))
+
     if code_parts:
         pipeline_path = out_dir / "pipeline.py"
         pipeline_path.write_text("\n".join(code_parts), encoding="utf-8")
@@ -85,8 +97,9 @@ def _save_outputs(session_id: str, state: dict) -> dict[str, str]:
 async def upload_file(file: UploadFile = File(...)) -> dict:
     """Accept uploaded CSV or Excel file and save to uploads/."""
     suffix = Path(file.filename or "").suffix.lower()
-    if suffix not in (".csv", ".xlsx", ".xls"):
-        raise HTTPException(status_code=400, detail="Only .csv and .xlsx files are allowed")
+    allowed = (".csv", ".xlsx", ".xls", ".json", ".parquet", ".pdf", ".txt", ".png", ".jpg", ".jpeg")
+    if suffix not in allowed:
+        raise HTTPException(status_code=400, detail=f"File type {suffix} not supported")
 
     file_id = f"{uuid.uuid4().hex[:12]}{suffix}"
     path = UPLOADS_DIR / file_id
