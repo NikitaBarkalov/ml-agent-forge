@@ -17,6 +17,7 @@ const resultsSection = document.getElementById('results-section');
 const downloadsDiv = document.getElementById('downloads');
 
 let uploadedPath = null;
+let lastActiveAgent = null; // Track the last highlighted agent to prevent unnecessary re-renders
 
 const SCENARIOS = {
   ba: {
@@ -44,8 +45,6 @@ scenarioSelect.addEventListener('change', () => {
     document.getElementById('business-context').value = SCENARIOS[key].context;
     document.getElementById('task').value = SCENARIOS[key].task;
 
-    // Note: We can't easily auto-select the file in a standard <input type="file">
-    // for security reasons, but we can update the label to hint at the required file.
     if (!uploadedPath) {
       fileNameSpan.textContent = `Please upload ${SCENARIOS[key].file}`;
       fileNameSpan.classList.add('warning');
@@ -104,12 +103,6 @@ function showResults(downloads) {
   resultsSection.classList.remove('hidden');
   downloadsDiv.innerHTML = '';
   if (downloads.report) {
-    const a = document.createElement('a');
-    a.href = `${API_BASE}/download/${downloads.report}`;
-    a.download = 'final_report.md';
-    a.className = 'btn';
-    a.textContent = 'Download Report (.md)';
-    a.click = () => { };
     const btn = document.createElement('button');
     btn.className = 'btn';
     btn.textContent = 'Download Report (.md)';
@@ -135,6 +128,10 @@ form.addEventListener('submit', async (e) => {
   runBtn.disabled = true;
   setStatus('Connecting...', 'running');
   logContent.innerHTML = '';
+  
+  // Reset the graph state on new run
+  lastActiveAgent = null; 
+  highlightAgent(null);
 
   const wsUrl = `${(window.location.protocol === 'https:' ? 'wss:' : 'ws:')}//${window.location.host}${API_BASE}/ws/run`;
   const ws = new WebSocket(wsUrl);
@@ -158,19 +155,20 @@ form.addEventListener('submit', async (e) => {
           if (data.message && data.message.includes('Agent started')) {
              setStatus(`Current Step: ${data.agent}`, 'running');
           }
+          // Highlight ONLY if the agent has changed (performance fix)
           highlightAgent(data.agent);
 
           if (data.reason && typeof showReasoning === 'function') {
               showReasoning(data.agent, data.reason);
           }
         }
-        
-
       } else if (data.type === 'done') {
         setStatus('Done', 'done');
         showResults(data.downloads || {});
-       
-        highlightAgent(null); 
+        
+        // Highlight ALL agents at the end to show completion
+        highlightAgent('ALL'); 
+        
         runBtn.disabled = false;
       } else if (data.type === 'error') {
         setStatus(`Error: ${data.message}`, 'error');
@@ -196,22 +194,27 @@ form.addEventListener('submit', async (e) => {
   };
 });
 
-
 function highlightAgent(agentName) {
+    const safeAgent = agentName ? agentName.trim() : '';
     
-    if (!agentName) {
-        updateGraphUI(''); 
+    // Performance Check: Don't re-render mermaid if the state hasn't changed.
+    if (safeAgent === lastActiveAgent) {
         return;
     }
-    updateGraphUI(agentName); 
+    
+    lastActiveAgent = safeAgent;
+    updateGraphUI(safeAgent); 
 }
 
 async function updateGraphUI(activeAgent) {
     const element = document.getElementById('agent-graph');
     if (!element) return;
-    const graphDefinition = `
+    
+    // Graph Definition for Mermaid
+    // FIX: Changed "Detective[DataDetective]" to "DataDetective" to match backend names.
+    let graphDefinition = `
     graph TD
-        %% Определяем узлы и связи
+        %% Define nodes and edges
         Start((Start)) --> Supervisor
         Supervisor -->|Routing| DataDetective
         Supervisor -->|Routing| Strategist
@@ -225,14 +228,25 @@ async function updateGraphUI(activeAgent) {
         
         Supervisor -->|Finish| End((End))
 
-        %% Стилизация
-        classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
-        classDef active fill:#ffeb3b,stroke:#fbc02d,stroke-width:4px,color:black;
+        %% Styling (Dark Mode)
+        %% Default class (inactive nodes): Dark grey/blue background
+        classDef default fill:#161b22,stroke:#30363d,stroke-width:2px,color:#e6edf3;
         
-        %% Применяем класс 'active' к текущему агенту
-        class ${activeAgent} active;
+        %% Active class (current node or all finished): Green background
+        classDef active fill:#238636,stroke:#3fb950,stroke-width:3px,color:#ffffff;
     `;
     
+    // Apply the 'active' class
+    if (activeAgent === 'ALL') {
+        // Highlight EVERYTHING when finished
+        graphDefinition += `\n        class Start,Supervisor,DataDetective,Strategist,Developer,Reporter,End active;`;
+    } else if (activeAgent && activeAgent !== '') {
+        // Highlight ONLY the current agent
+        // Now works because node IDs (e.g., DataDetective) match this name
+        graphDefinition += `\n        class ${activeAgent} active;`;
+    }
+    
+    // Clear previous processed attribute to force re-render
     element.removeAttribute('data-processed');
     element.innerHTML = graphDefinition;
     
