@@ -11,7 +11,6 @@ const runBtn = document.getElementById('run-btn');
 const fileInput = document.getElementById('file-input');
 const fileNameSpan = document.getElementById('file-name');
 const statusValue = document.getElementById('status-value');
-const logContent = document.getElementById('log-content');
 const progressSection = document.getElementById('progress-section');
 const resultsSection = document.getElementById('results-section');
 const downloadsDiv = document.getElementById('downloads');
@@ -175,33 +174,17 @@ function updateGraph(activeAgent) {
   }
 }
 
-function appendLog(ev) {
-  const pre = logContent;
-  const line = document.createElement('div');
-  line.className = 'log-line';
-
-  const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString([], { hour12: false }) : '--:--:--';
-  const agent = ev.agent || 'System';
-  const normalizedAgent = agent.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const msg = ev.message || JSON.stringify(ev);
-  const level = ev.level || 'info';
-
-  // Update thought bubble if it's a significant message (Premium Interaction)
+function updateThought(agent, message) {
   const thoughtContent = document.getElementById('thought-content');
-  if (thoughtContent && ev.agent) {
-    if (msg.includes('Agent started')) {
-      thoughtContent.textContent = `Starting ${ev.agent} phase...`;
-    } else if (msg.length > 10 && (msg.includes('produced') || msg.includes('LLM response') || msg.includes('Executing'))) {
+  if (thoughtContent && agent) {
+    if (message.includes('Agent started')) {
+      thoughtContent.textContent = `Starting ${agent} phase...`;
+    } else if (message.length > 10 && (message.includes('produced') || message.includes('LLM response') || message.includes('Executing'))) {
       // Clean up technical logs for the thought bubble
-      const cleanMsg = msg.replace(/\[.*?\]/g, '').split('\n')[0].trim();
+      const cleanMsg = message.replace(/\[.*?\]/g, '').split('\n')[0].trim();
       thoughtContent.textContent = cleanMsg.length > 100 ? cleanMsg.substring(0, 97) + '...' : cleanMsg;
     }
   }
-
-  line.innerHTML = `<span class="ts">${ts}</span> <span class="agent agent-${normalizedAgent}">[${agent}]</span> <span class="level-${level}">${msg}</span>`;
-  pre.appendChild(line);
-  const logWindow = document.getElementById('log-window');
-  if (logWindow) logWindow.scrollTop = logWindow.scrollHeight;
 }
 
 function setStatus(text, className = '') {
@@ -316,7 +299,6 @@ form.addEventListener('submit', async (e) => {
 
   runBtn.disabled = true;
   setStatus('Connecting...', 'running');
-  logContent.innerHTML = '';
 
   // Reset Graph & UI (Premium Reset)
   document.querySelectorAll('.node').forEach(node => {
@@ -351,16 +333,18 @@ form.addEventListener('submit', async (e) => {
       const data = JSON.parse(event.data);
 
       if (data.type === 'log') {
-        appendLog(data);
-        if (data.agent) {
-          updateGraph(data.agent);
-          if (data.message && data.message.includes('Agent started')) {
-            setStatus(`Current Step: ${data.agent}`, 'running');
-          }
+        const ev = data.event;
+        if (ev.agent && ev.message) {
+          updateThought(ev.agent, ev.message);
+        }
+      } else if (data.type === 'progress') {
+        updateGraph(data.agent);
+        if (data.message && data.message.includes('Agent started')) {
+          setStatus(`Current Step: ${data.agent}`, 'running');
+        }
 
-          if (data.reason && typeof showReasoning === 'function') {
-            showReasoning(data.agent, data.reason);
-          }
+        if (data.reason && typeof showReasoning === 'function') {
+          showReasoning(data.agent, data.reason);
         }
       } else if (data.type === 'done') {
         setStatus('Done', 'done');
@@ -369,12 +353,10 @@ form.addEventListener('submit', async (e) => {
         runBtn.disabled = false;
       } else if (data.type === 'error') {
         setStatus(`Error: ${data.message}`, 'error');
-        appendLog({ message: data.message, level: 'error' });
         runBtn.disabled = false;
       }
     } catch (e) {
       console.error(e);
-      appendLog({ message: event.data, level: 'info' });
     }
   };
 
