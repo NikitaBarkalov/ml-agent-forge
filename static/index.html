@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ML Agent Forge</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true });</script>
 </head>
 <body>
     <div class="app">
@@ -53,6 +55,29 @@
                     <span class="status-label">Status:</span>
                     <span class="status-value" id="status-value">Idle</span>
                 </div>
+                
+                <div class="card" id="graph-container">
+                    <h3>Workflow Visualization</h3>
+                    <div class="mermaid" id="agent-graph">
+                    graph TD
+                        Start((Start)) --> Supervisor
+                        Supervisor -->|Routing| Detective[DataDetective]
+                        Supervisor -->|Routing| Strategist
+                        Supervisor -->|Routing| Developer
+                        Supervisor -->|Routing| Reporter
+                        Detective --> Supervisor
+                        Strategist --> Supervisor
+                        Developer --> Supervisor
+                        Reporter --> Supervisor
+                        Supervisor -->|Finish| End((End))
+                        
+                        %% Стили по умолчанию
+                        classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
+                        classDef active fill:#ffeb3b,stroke:#fbc02d,stroke-width:4px,color:black;
+                    </div>
+                </div>
+
+                
                 <div class="log-window" id="log-window">
                     <pre id="log-content"></pre>
                 </div>

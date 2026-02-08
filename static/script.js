@@ -151,21 +151,34 @@ form.addEventListener('submit', async (e) => {
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
+
       if (data.type === 'log') {
         appendLog(data);
-        if (data.agent && data.message && data.message.includes('Agent started')) {
-          setStatus(`Current Step: ${data.agent}`, 'running');
+        if (data.agent) {
+          if (data.message && data.message.includes('Agent started')) {
+             setStatus(`Current Step: ${data.agent}`, 'running');
+          }
+          highlightAgent(data.agent);
+
+          if (data.reason && typeof showReasoning === 'function') {
+              showReasoning(data.agent, data.reason);
+          }
         }
+        
+
       } else if (data.type === 'done') {
         setStatus('Done', 'done');
         showResults(data.downloads || {});
+       
+        highlightAgent(null); 
         runBtn.disabled = false;
       } else if (data.type === 'error') {
         setStatus(`Error: ${data.message}`, 'error');
         appendLog({ message: data.message, level: 'error' });
         runBtn.disabled = false;
       }
-    } catch (_) {
+    } catch (e) {
+      console.error(e); 
       appendLog({ message: event.data, level: 'info' });
     }
   };
@@ -182,3 +195,52 @@ form.addEventListener('submit', async (e) => {
     }
   };
 });
+
+
+function highlightAgent(agentName) {
+    
+    if (!agentName) {
+        updateGraphUI(''); 
+        return;
+    }
+    updateGraphUI(agentName); 
+}
+
+async function updateGraphUI(activeAgent) {
+    const element = document.getElementById('agent-graph');
+    if (!element) return;
+    const graphDefinition = `
+    graph TD
+        %% Определяем узлы и связи
+        Start((Start)) --> Supervisor
+        Supervisor -->|Routing| DataDetective
+        Supervisor -->|Routing| Strategist
+        Supervisor -->|Routing| Developer
+        Supervisor -->|Routing| Reporter
+        
+        DataDetective --> Supervisor
+        Strategist --> Supervisor
+        Developer --> Supervisor
+        Reporter --> Supervisor
+        
+        Supervisor -->|Finish| End((End))
+
+        %% Стилизация
+        classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
+        classDef active fill:#ffeb3b,stroke:#fbc02d,stroke-width:4px,color:black;
+        
+        %% Применяем класс 'active' к текущему агенту
+        class ${activeAgent} active;
+    `;
+    
+    element.removeAttribute('data-processed');
+    element.innerHTML = graphDefinition;
+    
+    if (typeof mermaid !== 'undefined') {
+        try {
+            await mermaid.run({ nodes: [element] });
+        } catch (e) {
+            console.error('Mermaid render error:', e);
+        }
+    }
+}
