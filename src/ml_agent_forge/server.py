@@ -29,7 +29,7 @@ log = get_logger()
 app = FastAPI(title="ML Agent Forge", description="Multi-agent ML & BA pipeline")
 
 
-def _run_graph(business_context: str, task: str, file_paths: list[str], log_queue: Queue) -> dict:
+def _run_graph(business_context: str, task: str, metaData: str, file_paths: list[str], log_queue: Queue) -> dict:
     """Run the graph synchronously. Sets log_queue in thread context for WebSocket streaming."""
     set_log_queue(log_queue)
     try:
@@ -38,6 +38,7 @@ def _run_graph(business_context: str, task: str, file_paths: list[str], log_queu
             "user_input": {
                 "business_context": business_context,
                 "task": task,
+                "metaData": metaData,
                 "file_paths": file_paths,
             },
             "data_profile": "",
@@ -107,6 +108,7 @@ async def ws_run(websocket: WebSocket):
         data = await websocket.receive_json()
         business_context = data.get("business_context", "")
         task = data.get("task", "")
+        metaData = data.get("metaData", "")
         file_paths_raw = data.get("file_paths", [])
 
         # Resolve file paths (filenames from /upload are stored in uploads/)
@@ -132,6 +134,7 @@ async def ws_run(websocket: WebSocket):
             _run_graph,
             business_context,
             task,
+            metaData,
             file_paths,
             log_queue,
         )
