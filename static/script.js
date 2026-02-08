@@ -286,19 +286,23 @@ async function showResults(downloads) {
     }
 
     // 3. Add Download Buttons
-    const btn = document.createElement('button');
-    btn.className = 'btn';
-    btn.textContent = 'Download Report (.md)';
-    btn.onclick = () => window.open(`${API_BASE}/download/${downloads.report}`, '_blank');
-    downloadsDiv.appendChild(btn);
-  }
+    if (downloads.report) {
+      const reportBtn = document.createElement('a');
+      reportBtn.href = `${API_BASE}/download/${downloads.report}`;
+      reportBtn.className = 'btn-download';
+      reportBtn.textContent = 'Download Markdown';
+      reportBtn.download = 'final_report.md';
+      downloadsDiv.appendChild(reportBtn);
+    }
 
-  if (downloads.pipeline) {
-    const btn = document.createElement('button');
-    btn.className = 'btn';
-    btn.textContent = 'Download Code / Pipeline';
-    btn.onclick = () => window.open(`${API_BASE}/download/${downloads.pipeline}`, '_blank');
-    downloadsDiv.appendChild(btn);
+    if (downloads.pipeline) {
+      const codeBtn = document.createElement('a');
+      codeBtn.href = `${API_BASE}/download/${downloads.pipeline}`;
+      codeBtn.className = 'btn-download';
+      codeBtn.textContent = 'Download Pipeline';
+      codeBtn.download = 'pipeline.py';
+      downloadsDiv.appendChild(codeBtn);
+    }
   }
 }
 
