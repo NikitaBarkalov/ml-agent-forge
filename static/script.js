@@ -98,12 +98,40 @@ function setStatus(text, className = '') {
   statusValue.className = 'status-value ' + className;
 }
 
+const toggleReport = document.getElementById('toggle-report');
+const toggleCode = document.getElementById('toggle-code');
+const reportView = document.getElementById('report-view');
+const codeView = document.getElementById('code-view');
+
+// Toggle logic
+if (toggleReport && toggleCode) {
+  toggleReport.addEventListener('click', () => {
+    toggleReport.classList.add('active');
+    toggleCode.classList.remove('active');
+    if (reportView) reportView.classList.remove('hidden');
+    if (codeView) codeView.classList.add('hidden');
+  });
+
+  toggleCode.addEventListener('click', () => {
+    toggleReport.classList.remove('active');
+    toggleCode.classList.add('active');
+    if (reportView) reportView.classList.add('hidden');
+    if (codeView) codeView.classList.remove('hidden');
+  });
+}
+
 async function showResults(downloads) {
+  const reportContainer = document.getElementById('report-container');
+  const codeContainer = document.getElementById('code-container');
+
   resultsSection.classList.remove('hidden');
   resultsSection.classList.add('fadeIn');
   downloadsDiv.innerHTML = '';
-  const reportContainer = document.getElementById('report-container');
-  reportContainer.innerHTML = 'Loading report...';
+
+  // Reset to report view by default when showing results
+  if (toggleReport) toggleReport.click();
+
+  if (reportContainer) reportContainer.innerHTML = 'Loading report...';
   if (codeContainer) codeContainer.textContent = 'Loading code...';
 
   if (downloads.report) {
@@ -178,7 +206,7 @@ form.addEventListener('submit', async (e) => {
     ws.send(JSON.stringify({
       business_context: businessContext,
       task,
-      metaData: metaData, 
+      metaData: metaData,
       file_paths: filePaths,
     }));
   };
@@ -191,11 +219,11 @@ form.addEventListener('submit', async (e) => {
         appendLog(data);
         if (data.agent) {
           if (data.message && data.message.includes('Agent started')) {
-             setStatus(`Current Step: ${data.agent}`, 'running');
+            setStatus(`Current Step: ${data.agent}`, 'running');
           }
-         
+
           if (data.reason && typeof showReasoning === 'function') {
-              showReasoning(data.agent, data.reason);
+            showReasoning(data.agent, data.reason);
           }
         }
       } else if (data.type === 'done') {
@@ -208,7 +236,7 @@ form.addEventListener('submit', async (e) => {
         runBtn.disabled = false;
       }
     } catch (e) {
-      console.error(e); 
+      console.error(e);
       appendLog({ message: event.data, level: 'info' });
     }
   };
