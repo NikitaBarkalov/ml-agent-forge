@@ -18,10 +18,12 @@ const downloadsDiv = document.getElementById('downloads');
 
 let uploadedPath = null;
 
-// Graph rendering state
-let lastRenderedAgent = null; // Какой агент сейчас нарисован
-let pendingAgent = null;      // Какой агент ждет отрисовки
-let isRendering = false;      // Флаг "идет отрисовка"
+// === RENDER STATE ===
+// targetAgent: какой агент должен быть подсвечен прямо сейчас (приходит из логов)
+// renderedAgent: какой агент фактически нарисован на экране
+let targetAgent = null;
+let renderedAgent = null;
+let isRenderLoopRunning = false;
 
 const SCENARIOS = {
   ba: {
@@ -130,15 +132,22 @@ form.addEventListener('submit', async (e) => {
   const metaData = document.getElementById('metaData').value.trim()
   const filePaths = uploadedPath ? [uploadedPath] : [];
 
-
   runBtn.disabled = true;
   setStatus('Connecting...', 'running');
   logContent.innerHTML = '';
   
-  // Сброс состояния графа
-  lastRenderedAgent = null;
-  pendingAgent = null;
-  highlightAgent(null);
+  // Сброс состояния рендера перед запуском
+  targetAgent = null;
+  renderedAgent = null;
+  
+  // Запуск цикла рендеринга, если он еще не запущен
+  if (!isRenderLoopRunning) {
+      isRenderLoopRunning = true;
+      requestAnimationFrame(renderLoop);
+  }
+
+  // Обновляем на "пусто", чтобы сбросить подсветку
+  updateGraphTarget(null);
 
   const wsUrl = `${(window.location.protocol === 'https:' ? 'wss:' : 'ws:')}//${window.location.host}${API_BASE}/ws/run`;
   const ws = new WebSocket(wsUrl);
@@ -163,8 +172,8 @@ form.addEventListener('submit', async (e) => {
           if (data.message && data.message.includes('Agent started')) {
              setStatus(`Current Step: ${data.agent}`, 'running');
           }
-          // Обновляем граф при каждом сообщении от агента
-          highlightAgent(data.agent);
+          // Просто обновляем цель, отрисовка произойдет в цикле requestAnimationFrame
+          updateGraphTarget(data.agent);
 
           if (data.reason && typeof showReasoning === 'function') {
               showReasoning(data.agent, data.reason);
@@ -174,8 +183,8 @@ form.addEventListener('submit', async (e) => {
         setStatus('Done', 'done');
         showResults(data.downloads || {});
         
-        // В конце подсвечиваем всё
-        highlightAgent('ALL'); 
+        // Финальная подсветка
+        updateGraphTarget('ALL'); 
         
         runBtn.disabled = false;
       } else if (data.type === 'error') {
@@ -202,55 +211,43 @@ form.addEventListener('submit', async (e) => {
   };
 });
 
-// === ИСПРАВЛЕННАЯ ЛОГИКА РЕНДЕРИНГА ===
-// Используем render queue + mermaid.render для устранения мерцания
+// === OPTIMIZED RENDER LOOP ===
+// Разделяем получение данных (WebSocket) и отрисовку (UI Thread)
 
-function highlightAgent(agentName) {
-    const safeAgent = agentName ? agentName.trim() : '';
-    pendingAgent = safeAgent;
-    processRenderQueue();
+function updateGraphTarget(agentName) {
+    const safeAgent = agentName ? agentName.trim() : null;
+    targetAgent = safeAgent;
 }
 
-async function processRenderQueue() {
-    // Если уже рисуем - выходим, следующий цикл подхватит изменение
-    if (isRendering) return;
-
-    // Если то, что хотим нарисовать, уже на экране - ничего не делаем
-    if (pendingAgent === lastRenderedAgent) {
-        pendingAgent = null; // Сбрасываем pending, чтобы не копить
-        return;
-    }
-    
-    isRendering = true;
-    const agentToRender = pendingAgent;
-
-    try {
-        await updateGraphUI(agentToRender);
-        lastRenderedAgent = agentToRender;
-    } catch (e) {
-        console.error("Graph render failed:", e);
-    } finally {
-        isRendering = false;
+// Эта функция крутится постоянно (60 FPS), но делает работу только если target != rendered
+async function renderLoop() {
+    if (targetAgent !== renderedAgent) {
+        const agentToRender = targetAgent;
         
-        
-        if (pendingAgent !== lastRenderedAgent) {
-            processRenderQueue();
+        try {
+            await drawGraph(agentToRender);
+            renderedAgent = agentToRender;
+        } catch (e) {
+            console.error("Graph render failed:", e);
         }
     }
+    
+    // Продолжаем цикл
+    requestAnimationFrame(renderLoop);
 }
 
-async function updateGraphUI(activeAgent) {
+async function drawGraph(activeAgent) {
     const element = document.getElementById('agent-graph');
     if (!element) return;
     
     
     let graphDefinition = `
     graph TD
-        Start((Start)) --> Supervisor
-        Supervisor -->|Routing| DataDetective
-        Supervisor -->|Routing| Strategist
-        Supervisor -->|Routing| Developer
-        Supervisor -->|Routing| Reporter
+        Start((Start)) --> Supervisor[Supervisor]
+        Supervisor -->|Routing| DataDetective[DataDetective]
+        Supervisor -->|Routing| Strategist[Strategist]
+        Supervisor -->|Routing| Developer[Developer]
+        Supervisor -->|Routing| Reporter[Reporter]
         
         DataDetective --> Supervisor
         Strategist --> Supervisor
@@ -262,7 +259,6 @@ async function updateGraphUI(activeAgent) {
         classDef active fill:#238636,stroke:#3fb950,stroke-width:3px,color:#ffffff
     `;
     
-    
     if (activeAgent === 'ALL') {
         graphDefinition += `\nclass Start,Supervisor,DataDetective,Strategist,Developer,Reporter,End active`;
     } else if (activeAgent) {
@@ -270,16 +266,18 @@ async function updateGraphUI(activeAgent) {
     }
 
     try {
-        
-        const id = 'mermaid-graph-' + Date.now();
-        
-
-        const { svg } = await mermaid.render(id, graphDefinition);
+        const id = 'mermaid-' + Date.now();
         
         
-        element.innerHTML = svg;
+        const renderResult = await mermaid.render(id, graphDefinition);
         
+        
+        const svgContent = (typeof renderResult === 'string') ? renderResult : renderResult.svg;
+        
+        if (svgContent) {
+            element.innerHTML = svgContent;
+        }
     } catch (err) {
-        console.error("Mermaid render error:", err);
+        console.error("Mermaid internal error:", err);
     }
 }
