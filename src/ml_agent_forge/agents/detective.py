@@ -61,10 +61,13 @@ def detective_node(state: GraphState) -> dict:
     user_input = state.get("user_input") or {}
     file_paths = user_input.get("file_paths") or []
     task = user_input.get("task", "")
+    metaData = user_input.get("metaData", "")
+    
     get_logger().info(
         "Agent started",
         agent="DataDetective",
         task=task[:200] + "..." if len(task) > 200 else task,
+        metaData=metaData[:200] + "..." if len(task) > 200 else metaData,
         file_paths=file_paths,
     )
     if not file_paths:
@@ -74,7 +77,7 @@ def detective_node(state: GraphState) -> dict:
         profile = "\n\n".join(profiles)
 
     return {
-        "data_profile": profile,
+        "data_profile": metaData + '\n' + profile,
         "messages": (state.get("messages") or []) + [
             HumanMessage(content=f"DataDetective produced data_profile for {len(file_paths)} file(s).")
         ],

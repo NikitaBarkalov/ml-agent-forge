@@ -15,6 +15,7 @@ load_dotenv()
 def run(
     business_context: str,
     task: str,
+    metaData: str,
     file_paths: list[str],
 ) -> dict:
     """Run the graph and return the final state (including final_report)."""
@@ -23,6 +24,7 @@ def run(
         "user_input": {
             "business_context": business_context,
             "task": task,
+            "metaData": metaData,
             "file_paths": file_paths,
         },
         "data_profile": "",
@@ -47,6 +49,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run ML/BA multi-agent pipeline")
     parser.add_argument("--business", type=str, default="E-commerce conversion analysis")
     parser.add_argument("--task", type=str, default="Analyze conversion funnel and suggest improvements.")
+    parser.add_argument("--metaData", type=str, default="This dataset contains conversion performance metrics for different user or marketing segments.")
     parser.add_argument("--files", type=str, nargs="*", default=[], help="Paths to data files (CSV/Excel)")
     args = parser.parse_args()
 
@@ -69,8 +72,8 @@ def main():
     if not os.getenv("E2B_API_KEY") and file_paths:
         print("Warning: E2B_API_KEY not set. Developer node (code execution) will fail.")
 
-    log.info("Running pipeline", business=args.business, task=args.task[:100], files=file_paths)
-    state = run(args.business, args.task, file_paths)
+    log.info("Running pipeline", business=args.business, task=args.task[:100], metaData=args.metaData[:100], files=file_paths)
+    state = run(args.business, args.task,args.metaData,file_paths)
     report = state.get("final_report") or ""
     log.info("Pipeline finished", status="pipeline_end", report_len=len(report))
     print("\n" + "=" * 60 + "\nFINAL REPORT\n" + "=" * 60 + "\n")

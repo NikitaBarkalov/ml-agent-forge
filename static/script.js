@@ -123,7 +123,9 @@ form.addEventListener('submit', async (e) => {
 
   const businessContext = document.getElementById('business-context').value.trim();
   const task = document.getElementById('task').value.trim();
+  const metaData = document.getElementById('metaData').value.trim()
   const filePaths = uploadedPath ? [uploadedPath] : [];
+
 
   runBtn.disabled = true;
   setStatus('Connecting...', 'running');
@@ -141,6 +143,7 @@ form.addEventListener('submit', async (e) => {
     ws.send(JSON.stringify({
       business_context: businessContext,
       task,
+      metaData: metaData, 
       file_paths: filePaths,
     }));
   };
@@ -205,16 +208,18 @@ function highlightAgent(agentName) {
     lastActiveAgent = safeAgent;
     updateGraphUI(safeAgent); 
 }
+let isRendering = false;
 
 async function updateGraphUI(activeAgent) {
+    if (isRendering) return; // Защита от наслоения рендеров
+    
     const element = document.getElementById('agent-graph');
     if (!element) return;
     
-    // Graph Definition for Mermaid
-    // FIX: Changed "Detective[DataDetective]" to "DataDetective" to match backend names.
+    isRendering = true;
+
     let graphDefinition = `
     graph TD
-        %% Define nodes and edges
         Start((Start)) --> Supervisor
         Supervisor -->|Routing| DataDetective
         Supervisor -->|Routing| Strategist
@@ -228,33 +233,22 @@ async function updateGraphUI(activeAgent) {
         
         Supervisor -->|Finish| End((End))
 
-        %% Styling (Dark Mode)
-        %% Default class (inactive nodes): Dark grey/blue background
-        classDef default fill:#161b22,stroke:#30363d,stroke-width:2px,color:#e6edf3;
-        
-        %% Active class (current node or all finished): Green background
-        classDef active fill:#238636,stroke:#3fb950,stroke-width:3px,color:#ffffff;
+        classDef active fill:#238636,stroke:#3fb950,stroke-width:3px,color:#ffffff
     `;
     
-    // Apply the 'active' class
     if (activeAgent === 'ALL') {
-        // Highlight EVERYTHING when finished
-        graphDefinition += `\n        class Start,Supervisor,DataDetective,Strategist,Developer,Reporter,End active;`;
-    } else if (activeAgent && activeAgent !== '') {
-        // Highlight ONLY the current agent
-        // Now works because node IDs (e.g., DataDetective) match this name
-        graphDefinition += `\n        class ${activeAgent} active;`;
+        graphDefinition += `\nclass Start,Supervisor,DataDetective,Strategist,Developer,Reporter,End active`;
+    } else if (activeAgent) {
+        graphDefinition += `\nclass ${activeAgent} active`;
     }
-    
-    // Clear previous processed attribute to force re-render
-    element.removeAttribute('data-processed');
-    element.innerHTML = graphDefinition;
-    
-    if (typeof mermaid !== 'undefined') {
-        try {
-            await mermaid.run({ nodes: [element] });
-        } catch (e) {
-            console.error('Mermaid render error:', e);
-        }
+
+    try {
+        element.removeAttribute('data-processed');
+        element.textContent = graphDefinition; 
+        await mermaid.run({ nodes: [element] });
+    } catch (err) {
+        console.error("Mermaid render error:", err);
+    } finally {
+        isRendering = false;
     }
 }

@@ -6,7 +6,13 @@
     <title>ML Agent Forge</title>
     <link rel="stylesheet" href="/static/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({ startOnLoad: true });</script>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'dark', // Установка темной темы для соответствия стилям
+            securityLevel: 'loose'
+        });
+    </script>
 </head>
 <body>
     <div class="app">
@@ -38,6 +44,12 @@
                         <label for="task">Task</label>
                         <textarea id="task" rows="3" placeholder="e.g. Analyze conversion funnel and suggest improvements.">Analyze conversion funnel and suggest improvements.</textarea>
                     </div>
+                    
+                    <div class="field">
+                        <label for="metaData">Data Description</label>
+                        <textarea id="metaData" rows="3" placeholder="e.g. This dataset contains conversion performance metrics for different user or marketing segments.">This dataset contains conversion performance metrics for different user or marketing segments.</textarea>
+                    </div>
+
                     <div class="field">
                         <label for="file-input">Dataset (CSV or Excel)</label>
                         <div class="file-row">
@@ -61,23 +73,24 @@
                     <div class="mermaid" id="agent-graph">
                     graph TD
                         Start((Start)) --> Supervisor
-                        Supervisor -->|Routing| Detective[DataDetective]
+                        Supervisor -->|Routing| DataDetective
                         Supervisor -->|Routing| Strategist
                         Supervisor -->|Routing| Developer
                         Supervisor -->|Routing| Reporter
-                        Detective --> Supervisor
+                        
+                        DataDetective --> Supervisor
                         Strategist --> Supervisor
                         Developer --> Supervisor
                         Reporter --> Supervisor
+                        
                         Supervisor -->|Finish| End((End))
                         
-                        %% Стили по умолчанию
-                        classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
-                        classDef active fill:#ffeb3b,stroke:#fbc02d,stroke-width:4px,color:black;
+                     
+                        classDef default fill:#161b22,stroke:#30363d,stroke-width:2px,color:#e6edf3;
+                        classDef active fill:#238636,stroke:#3fb950,stroke-width:3px,color:#ffffff;
                     </div>
                 </div>
 
-                
                 <div class="log-window" id="log-window">
                     <pre id="log-content"></pre>
                 </div>
