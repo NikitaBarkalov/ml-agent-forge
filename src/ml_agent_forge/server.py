@@ -97,7 +97,7 @@ def _save_outputs(session_id: str, state: dict) -> dict[str, str]:
 async def upload_file(file: UploadFile = File(...)) -> dict:
     """Accept uploaded CSV or Excel file and save to uploads/."""
     suffix = Path(file.filename or "").suffix.lower()
-    allowed = (".csv", ".xlsx", ".xls", ".json", ".parquet", ".pdf", ".txt", ".png", ".jpg", ".jpeg")
+    allowed = (".csv", ".xlsx", ".xls", ".json", ".parquet", ".pdf", ".txt", ".png", ".jpg", ".jpeg", ".zip")
     if suffix not in allowed:
         raise HTTPException(status_code=400, detail=f"File type {suffix} not supported")
 

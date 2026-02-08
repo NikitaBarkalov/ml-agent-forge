@@ -102,9 +102,11 @@ function setStatus(text, className = '') {
 
 async function showResults(downloads) {
   resultsSection.classList.remove('hidden');
+  resultsSection.classList.add('fadeIn');
   downloadsDiv.innerHTML = '';
   const reportContainer = document.getElementById('report-container');
   reportContainer.innerHTML = 'Loading report...';
+  if (codeContainer) codeContainer.textContent = 'Loading code...';
 
   if (downloads.report) {
     // 1. Render Markdown Report
@@ -129,7 +131,19 @@ async function showResults(downloads) {
       reportContainer.innerHTML = `<p class="error">Failed to load report: ${e.message}</p>`;
     }
 
-    // 2. Add Download Buttons
+    // 2. Fetch and Highlight Code
+    if (downloads.pipeline && codeContainer) {
+      try {
+        const response = await fetch(`${API_BASE}/download/${downloads.pipeline}`);
+        const code = await response.text();
+        codeContainer.textContent = code;
+        Prism.highlightElement(codeContainer);
+      } catch (e) {
+        codeContainer.textContent = `Failed to load code: ${e.message}`;
+      }
+    }
+
+    // 3. Add Download Buttons
     const btn = document.createElement('button');
     btn.className = 'btn';
     btn.textContent = 'Download Report (.md)';

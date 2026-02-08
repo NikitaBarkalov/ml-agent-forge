@@ -26,6 +26,8 @@ def _analyze_file(file_path: str) -> str:
         return _profile_parquet(file_path)
     if suffix == ".pdf":
         return _profile_pdf(file_path)
+    if suffix == ".zip":
+        return _profile_zip(file_path)
     if suffix in (".txt", ".md"):
         return _profile_text(file_path)
     if suffix in (".png", ".jpg", ".jpeg", ".gif", ".webp", ".wav", ".mp3", ".ogg"):
@@ -109,6 +111,29 @@ def _profile_pdf(file_path: str) -> str:
         return f"PDF: {file_path}\n--- pages: {pages_count} ---\n--- metadata ---\n{info}\n--- preview (first ~1000 chars) ---\n{preview}"
     except Exception as e:
         return f"PDF {file_path} error: {e!s}"
+
+
+def _profile_zip(file_path: str) -> str:
+    """Analyze a ZIP archive: list files and their metadata."""
+    try:
+        import zipfile
+        with zipfile.ZipFile(file_path, 'r') as z:
+            info_list = z.infolist()
+            file_names = [info.filename for info in info_list]
+            total_size = sum(info.file_size for info in info_list)
+            
+            # Create a summary of contents
+            summary_lines = []
+            for info in info_list[:15]: # Show up to 15 files
+                summary_lines.append(f"  - {info.filename} ({info.file_size} bytes)")
+            
+            if len(info_list) > 15:
+                summary_lines.append(f"  ... and {len(info_list) - 15} more files.")
+            
+            summary = "\n".join(summary_lines)
+            return f"ZIP ARCHIVE: {file_path}\n--- total files: {len(info_list)} ---\n--- total uncompressed size: {total_size} bytes ---\n--- contents summary ---\n{summary}"
+    except Exception as e:
+        return f"ZIP {file_path} error: {e!s}"
 
 
 def _profile_text(file_path: str) -> str:
