@@ -1,6 +1,7 @@
 """Reporter agent: writes final markdown business report from code_context and user_input."""
 
 import os
+from pathlib import Path
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -31,14 +32,20 @@ def reporter_node(state: GraphState) -> dict:
 
     # Summarize code context for the LLM (avoid huge base64 in prompt)
     context_summary = []
+    all_artifact_names = []
     for i, ctx in enumerate(code_context):
+        run_artifacts = ctx.get("artifacts") or []
+        art_names = [Path(a.get("path", "")).name for a in run_artifacts if a.get("path")]
+        all_artifact_names.extend(art_names)
+        
         part = {
             "index": i + 1,
             "code": ctx.get("code"),
             "stdout": ctx.get("stdout"),
             "stderr": ctx.get("stderr"),
             "error": ctx.get("error"),
-            "artifacts_count": len(ctx.get("artifacts") or []),
+            "artifacts_count": len(run_artifacts),
+            "artifact_names": art_names,
         }
         context_summary.append(part)
 
@@ -51,9 +58,12 @@ Concrete task: {user_input.get("task", "")}
 Execution summary (code runs and outputs):
 {context_summary}
 
+Available artifacts (images/charts) to embed:
+{all_artifact_names}
+
 Instructions:
 - Structure the report with clear sections (Executive Summary, Findings, Methodology, Conclusions, Recommendations).
-- Reference generated charts/artifacts where relevant (e.g. "See figure in artifacts" or describe what was plotted).
+- **EMBED IMAGES**: Use standard markdown syntax `![Description](artifact_name.png)` to embed the available charts.
 - Base conclusions on the stdout and results above. If any run had errors, note them and interpret what succeeded.
 - Use markdown (headers, lists, bold) for readability.
 Output only the report body, no preamble."""

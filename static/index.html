@@ -1,11 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ML Agent Forge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
-    </head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</head>
+
 <body>
     <div class="app">
         <header class="header">
@@ -30,11 +41,13 @@
                 <form id="run-form">
                     <div class="field">
                         <label for="business-context">Business Context</label>
-                        <textarea id="business-context" rows="3" placeholder="e.g. E-commerce conversion analysis for a retail platform...">E-commerce conversion analysis</textarea>
+                        <textarea id="business-context" rows="3"
+                            placeholder="e.g. E-commerce conversion analysis for a retail platform...">E-commerce conversion analysis</textarea>
                     </div>
                     <div class="field">
                         <label for="task">Task</label>
-                        <textarea id="task" rows="3" placeholder="e.g. Analyze conversion funnel and suggest improvements.">Analyze conversion funnel and suggest improvements.</textarea>
+                        <textarea id="task" rows="3"
+                            placeholder="e.g. Analyze conversion funnel and suggest improvements.">Analyze conversion funnel and suggest improvements.</textarea>
                     </div>
                     
                     <div class="field">
@@ -45,7 +58,7 @@
                     <div class="field">
                         <label for="file-input">Dataset (CSV or Excel)</label>
                         <div class="file-row">
-                            <input type="file" id="file-input" accept=".csv,.xlsx,.xls">
+                            <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.json,.parquet,.pdf,.txt,.zip">
                             <span id="file-name" class="file-name">No file selected</span>
                         </div>
                     </div>
@@ -66,11 +79,27 @@
             </section>
 
             <section class="card results-section hidden" id="results-section">
-                <h2>Results</h2>
+                <div class="results-header">
+                    <h2>Final Results</h2>
+                    <div class="toggle-group">
+                        <button id="toggle-report" class="btn btn-toggle active">Report</button>
+                        <button id="toggle-code" class="btn btn-toggle">View Code</button>
+                    </div>
+                </div>
+
+                <div id="report-view">
+                    <div id="report-container" class="report-content"></div>
+                </div>
+
+                <div id="code-view" class="hidden">
+                    <pre class="line-numbers"><code id="code-container" class="language-python"></code></pre>
+                </div>
+
                 <div class="downloads" id="downloads"></div>
             </section>
         </main>
     </div>
     <script src="/static/script.js"></script>
 </body>
+
 </html>

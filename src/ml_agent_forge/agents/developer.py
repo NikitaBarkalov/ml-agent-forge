@@ -130,6 +130,8 @@ def developer_node(state: GraphState) -> dict:
 You are an expert Python developer for data analysis and ML. Rules:
 - Output only valid, runnable Python code. No markdown fences or explanations around the code.
 - Use pandas and numpy. Data files are in /home/user/data/ (paths provided below).
+- For .json files, use pd.read_json(). For .parquet, use pd.read_parquet().
+- For .pdf or .txt, use standard Python file handling or specialized libraries if mentioned in instructions.
 - Save all charts/figures to disk under /home/user/artifacts/ (e.g. plt.savefig('/home/user/artifacts/fig1.png')).
 - Use strict Python syntax. Avoid interactive backends; use 'Agg' for matplotlib if needed.
 - Print key results (metrics, shapes) so they appear in stdout."""

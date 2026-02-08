@@ -98,16 +98,57 @@ function setStatus(text, className = '') {
   statusValue.className = 'status-value ' + className;
 }
 
-function showResults(downloads) {
+async function showResults(downloads) {
   resultsSection.classList.remove('hidden');
+  resultsSection.classList.add('fadeIn');
   downloadsDiv.innerHTML = '';
+  const reportContainer = document.getElementById('report-container');
+  reportContainer.innerHTML = 'Loading report...';
+  if (codeContainer) codeContainer.textContent = 'Loading code...';
+
   if (downloads.report) {
+    // 1. Render Markdown Report
+    try {
+      const response = await fetch(`${API_BASE}/download/${downloads.report}`);
+      const markdown = await response.text();
+
+      // Configure marked to resolve relative images correctly
+      const sessionDir = downloads.report.split('/')[0];
+      const renderer = new marked.Renderer();
+      const originalImage = renderer.image.bind(renderer);
+      renderer.image = (token) => {
+        let href = typeof token === 'string' ? token : token.href;
+        if (href && !href.startsWith('http') && !href.startsWith('/')) {
+          href = `${API_BASE}/download/${sessionDir}/${href}`;
+        }
+        return originalImage(typeof token === 'string' ? href : { ...token, href });
+      };
+
+      reportContainer.innerHTML = marked.parse(markdown, { renderer });
+    } catch (e) {
+      reportContainer.innerHTML = `<p class="error">Failed to load report: ${e.message}</p>`;
+    }
+
+    // 2. Fetch and Highlight Code
+    if (downloads.pipeline && codeContainer) {
+      try {
+        const response = await fetch(`${API_BASE}/download/${downloads.pipeline}`);
+        const code = await response.text();
+        codeContainer.textContent = code;
+        Prism.highlightElement(codeContainer);
+      } catch (e) {
+        codeContainer.textContent = `Failed to load code: ${e.message}`;
+      }
+    }
+
+    // 3. Add Download Buttons
     const btn = document.createElement('button');
     btn.className = 'btn';
     btn.textContent = 'Download Report (.md)';
     btn.onclick = () => window.open(`${API_BASE}/download/${downloads.report}`, '_blank');
     downloadsDiv.appendChild(btn);
   }
+
   if (downloads.pipeline) {
     const btn = document.createElement('button');
     btn.className = 'btn';
