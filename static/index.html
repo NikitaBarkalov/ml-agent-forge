@@ -15,7 +15,18 @@
 
         <main class="main">
             <section class="card input-section">
-                <h2>Input</h2>
+                <div class="card-header-row">
+                    <h2>Input</h2>
+                    <div class="template-selector">
+                        <label for="scenario-select">Quick Scenarios:</label>
+                        <select id="scenario-select">
+                            <option value="">-- Choose a scenario --</option>
+                            <option value="ba">BA: Product Expansion</option>
+                            <option value="da">DA: Profit EDA</option>
+                            <option value="ml">ML: Sales Forecasting</option>
+                        </select>
+                    </div>
+                </div>
                 <form id="run-form">
                     <div class="field">
                         <label for="business-context">Business Context</label>

@@ -18,6 +18,41 @@ const downloadsDiv = document.getElementById('downloads');
 
 let uploadedPath = null;
 
+const SCENARIOS = {
+  ba: {
+    context: "We are an e-commerce company planning to expand our product line into high-end sustainable furniture. We currently sell standard office supplies and electronics.",
+    task: "Analyze our current sales trends by region and product category. Based on the performance of our 'Furniture' category in the South and West regions, suggest 3 specific sustainable furniture products we should launch next quarter.",
+    file: "sales_data.csv"
+  },
+  da: {
+    context: "The management team wants a deep dive into our profit margins across different regions and product types.",
+    task: "Perform an exploratory data analysis (EDA) to identify which product category is most profitable per unit. Create a visualization showing the profit distribution by region. Highlight any regions where sales are high but profit is low.",
+    file: "sales_data.csv"
+  },
+  ml: {
+    context: "We want to optimize our inventory by predicting future sales volume.",
+    task: "Build a simple time-series forecasting model (or a regression model using date as a feature) to predict the total sales volume for the next 7 days. Use the existing data for training and evaluation. Print the Mean Absolute Error (MAE) and save a plot of historical vs. predicted sales.",
+    file: "sales_data.csv"
+  }
+};
+
+// Scenario selection
+const scenarioSelect = document.getElementById('scenario-select');
+scenarioSelect.addEventListener('change', () => {
+  const key = scenarioSelect.value;
+  if (key && SCENARIOS[key]) {
+    document.getElementById('business-context').value = SCENARIOS[key].context;
+    document.getElementById('task').value = SCENARIOS[key].task;
+
+    // Note: We can't easily auto-select the file in a standard <input type="file">
+    // for security reasons, but we can update the label to hint at the required file.
+    if (!uploadedPath) {
+      fileNameSpan.textContent = `Please upload ${SCENARIOS[key].file}`;
+      fileNameSpan.classList.add('warning');
+    }
+  }
+});
+
 // File selection
 fileInput.addEventListener('change', () => {
   const file = fileInput.files[0];
@@ -74,7 +109,7 @@ function showResults(downloads) {
     a.download = 'final_report.md';
     a.className = 'btn';
     a.textContent = 'Download Report (.md)';
-    a.click = () => {};
+    a.click = () => { };
     const btn = document.createElement('button');
     btn.className = 'btn';
     btn.textContent = 'Download Report (.md)';

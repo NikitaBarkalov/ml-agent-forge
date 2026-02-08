@@ -65,7 +65,34 @@ body {
 .card h2 {
     font-size: 1.1rem;
     font-weight: 600;
-    margin: 0 0 1rem 0;
+    margin: 0;
+}
+
+.card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.template-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.template-selector label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.template-selector select {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
 }
 
 .field {
