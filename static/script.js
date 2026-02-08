@@ -63,17 +63,108 @@ fileInput.addEventListener('change', () => {
   }
 });
 
-async function uploadFile(file) {
+async function uploadFile(file, type = 'dataset') {
   const fd = new FormData();
   fd.append('file', file);
   try {
     const r = await fetch(`${API_BASE}/upload`, { method: 'POST', body: fd });
     const data = await r.json();
-    uploadedPath = data.filename;
-    fileNameSpan.textContent = `${file.name} (uploaded)`;
+
+    if (type === 'dataset') {
+      uploadedPath = data.filename;
+      fileNameSpan.textContent = `${file.name} (uploaded)`;
+    } else {
+      // Return the filename for specific field tracking
+      return data.filename;
+    }
   } catch (e) {
-    fileNameSpan.textContent = `Upload failed: ${e.message}`;
-    uploadedPath = null;
+    if (type === 'dataset') {
+      fileNameSpan.textContent = `Upload failed: ${e.message}`;
+      uploadedPath = null;
+    }
+    throw e;
+  }
+}
+
+// Field-specific file inputs
+const contextFile = document.getElementById('context-file');
+const taskFile = document.getElementById('task-file');
+const metadataFile = document.getElementById('metadata-file');
+
+const fieldFiles = {
+  context: null,
+  task: null,
+  metadata: null
+};
+
+async function handleFieldFileUpload(input, key, textareaId, nameSpanId) {
+  input.addEventListener('change', async () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    const nameSpan = document.getElementById(nameSpanId);
+    nameSpan.textContent = 'Uploading...';
+    nameSpan.style.display = 'inline';
+
+    try {
+      const serverFilename = await uploadFile(file, 'field');
+      fieldFiles[key] = serverFilename;
+      nameSpan.textContent = `✓ ${file.name}`;
+
+      // If text/markdown, try to read and populate textarea
+      if (file.type === 'text/plain' || file.name.endsWith('.md') || file.name.endsWith('.txt')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById(textareaId).value = e.target.result;
+        };
+        reader.readAsText(file);
+      }
+    } catch (e) {
+      nameSpan.textContent = 'Failed';
+      nameSpan.style.color = 'var(--error)';
+    }
+  });
+}
+
+if (contextFile) handleFieldFileUpload(contextFile, 'context', 'business-context', 'context-file-name');
+if (taskFile) handleFieldFileUpload(taskFile, 'task', 'task', 'task-file-name');
+if (metadataFile) handleFieldFileUpload(metadataFile, 'metadata', 'metaData', 'metadata-file-name');
+
+function updateGraph(activeAgent) {
+  if (!activeAgent) return;
+  const agentName = activeAgent.toString();
+  // Strip spaces and special chars, e.g. "Data Detective" -> "datadetective"
+  const normalizedAgent = agentName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  console.log(`[Graph] Update: "${agentName}" -> ID: "node-${normalizedAgent}"`);
+
+  // 1. Reset all nodes
+  document.querySelectorAll('.node').forEach(node => {
+    node.classList.remove('active');
+  });
+
+  // 2. Set active node
+  const currentNode = document.getElementById(`node-${normalizedAgent}`);
+  if (currentNode) {
+    currentNode.classList.add('active');
+    currentNode.classList.add('completed');
+  } else {
+    // Fallback search by text content if ID fails (extra safety)
+    document.querySelectorAll('.node text').forEach(txt => {
+      if (txt.textContent.toLowerCase().includes(normalizedAgent.replace('data', ''))) {
+        txt.parentElement.classList.add('active');
+        txt.parentElement.classList.add('completed');
+      }
+    });
+  }
+
+  // 3. Highlight edge from Supervisor to active worker
+  document.querySelectorAll('.edge').forEach(edge => edge.classList.remove('active'));
+  if (normalizedAgent !== 'supervisor' && normalizedAgent !== 'finish') {
+    const edgeToWorker = document.getElementById(`path-supervisor-${normalizedAgent}`);
+    if (edgeToWorker) {
+      edgeToWorker.classList.add('active');
+    }
   }
 }
 
@@ -198,6 +289,13 @@ form.addEventListener('submit', async (e) => {
   setStatus('Connecting...', 'running');
   logContent.innerHTML = '';
 
+  // Reset Graph
+  document.querySelectorAll('.node').forEach(node => {
+    node.classList.remove('active');
+    node.classList.remove('completed');
+  });
+  document.querySelectorAll('.edge').forEach(edge => edge.classList.remove('active'));
+
   const wsUrl = `${(window.location.protocol === 'https:' ? 'wss:' : 'ws:')}//${window.location.host}${API_BASE}/ws/run`;
   const ws = new WebSocket(wsUrl);
 
@@ -208,6 +306,9 @@ form.addEventListener('submit', async (e) => {
       task,
       metaData: metaData,
       file_paths: filePaths,
+      context_file: fieldFiles.context,
+      task_file: fieldFiles.task,
+      metadata_file: fieldFiles.metadata,
     }));
   };
 
@@ -218,6 +319,7 @@ form.addEventListener('submit', async (e) => {
       if (data.type === 'log') {
         appendLog(data);
         if (data.agent) {
+          updateGraph(data.agent);
           if (data.message && data.message.includes('Agent started')) {
             setStatus(`Current Step: ${data.agent}`, 'running');
           }
@@ -228,6 +330,7 @@ form.addEventListener('submit', async (e) => {
         }
       } else if (data.type === 'done') {
         setStatus('Done', 'done');
+        updateGraph('FINISH');
         showResults(data.downloads || {});
         runBtn.disabled = false;
       } else if (data.type === 'error') {

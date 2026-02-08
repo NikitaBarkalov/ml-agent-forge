@@ -26,50 +26,41 @@ def get_log_queue() -> Queue | None:
         return None
 
 
-class WebSocketLogHandler(logging.Handler):
-    """Logging handler that pushes events to the current session's queue for WebSocket streaming."""
-
-    _STANDARD_ATTRS = {
-        "name", "msg", "args", "created", "filename", "funcName", "levelname",
-        "levelno", "lineno", "module", "msecs", "pathname", "process", "processName",
-        "relativeCreated", "stack_info", "exc_info", "exc_text", "thread", "threadName",
-        "message", "taskName",
-    }
-
-    def emit(self, record: logging.LogRecord) -> None:
-        queue = get_log_queue()
-        if queue is None:
-            return
+def websocket_log_processor(logger, method_name, event_dict):
+    """Structlog processor that pushes events to the current session's log queue."""
+    queue = get_log_queue()
+    if queue is not None:
         try:
-            # Build message from record
-            msg = record.getMessage()
-            # Extract structlog/extra fields (agent, task, etc.)
-            extra = {
-                k: v for k, v in record.__dict__.items()
-                if k not in self._STANDARD_ATTRS and not k.startswith("_")
-            }
-            payload = {
-                "type": "log",
-                "level": record.levelname.lower(),
-                "message": msg,
-                "agent": extra.get("agent"),
-                "timestamp": getattr(record, "timestamp", None),
-            }
-            payload.update({k: v for k, v in extra.items() if k not in ("agent", "timestamp")})
+            # Prepare payload for WebSocket - only keep JSON serializable primitive types
+            payload = {}
+            for k, v in event_dict.items():
+                # Skip internal records and non-serializable types
+                if k.startswith("_") or k in ("metadata", "positional_args"):
+                    continue
+                if isinstance(v, (str, int, float, bool, list, dict)) or v is None:
+                    payload[k] = v
+                else:
+                    payload[k] = str(v)
+
+            payload["type"] = "log"
+            # Ensure we have a message field
+            if "event" in payload:
+                payload["message"] = payload.pop("event")
+            
+            # Use level from structlog
+            if "level" not in payload:
+                payload["level"] = method_name
+            
             queue.put_nowait(payload)
-        except Exception:
-            self.handleError(record)
+        except Exception as e:
+            # Fallback for debugging
+            import sys
+            sys.stderr.write(f"Log queue error: {e}\n")
+    return event_dict
 
 
 def configure_logging(log_file: str | Path = "pipeline.log") -> None:
-    """Configure structlog for console (colored) and file (JSONL) output.
-
-    - Console: Human-readable, colored via ConsoleRenderer.
-    - File: JSONL format (one JSON object per line) for parsing.
-
-    Timestamps and log levels are included in both outputs.
-    Call this at the start of main() to capture all execution.
-    """
+    """Configure structlog for console (colored) and file (JSONL) output."""
     log_path = Path(log_file)
 
     # Shared processors for timestamps and log levels
@@ -77,8 +68,8 @@ def configure_logging(log_file: str | Path = "pipeline.log") -> None:
         structlog.stdlib.add_log_level,
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
+        websocket_log_processor, # Push to WebSocket queue natively
     ]
 
     structlog.configure(
@@ -113,17 +104,11 @@ def configure_logging(log_file: str | Path = "pipeline.log") -> None:
     file_handler = logging.FileHandler(log_path, encoding="utf-8")
     file_handler.setFormatter(file_formatter)
 
-    # WebSocket streaming handler (pushes to queue when set via set_log_queue)
-    ws_handler = WebSocketLogHandler()
-    ws_handler.setLevel(logging.DEBUG)
-    ws_handler.setFormatter(console_formatter)  # format not used for queue, but required
-
     # Root logger
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
     root_logger.addHandler(console_handler)
     root_logger.addHandler(file_handler)
-    root_logger.addHandler(ws_handler)
     root_logger.setLevel(logging.DEBUG)
 
 

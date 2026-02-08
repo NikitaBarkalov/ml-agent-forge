@@ -40,18 +40,45 @@
                 </div>
                 <form id="run-form">
                     <div class="field">
-                        <label for="business-context">Business Context</label>
+                        <div class="field-header">
+                            <label for="business-context">Business Context</label>
+                            <div class="field-actions">
+                                <label class="btn-mini-upload" for="context-file">
+                                    <input type="file" id="context-file" hidden accept=".txt,.md,.pdf">
+                                    📎 Add File
+                                </label>
+                                <span id="context-file-name" class="mini-file-name"></span>
+                            </div>
+                        </div>
                         <textarea id="business-context" rows="3"
                             placeholder="e.g. E-commerce conversion analysis for a retail platform...">E-commerce conversion analysis</textarea>
                     </div>
                     <div class="field">
-                        <label for="task">Task</label>
+                        <div class="field-header">
+                            <label for="task">Task</label>
+                            <div class="field-actions">
+                                <label class="btn-mini-upload" for="task-file">
+                                    <input type="file" id="task-file" hidden accept=".txt,.md,.pdf">
+                                    📎 Add File
+                                </label>
+                                <span id="task-file-name" class="mini-file-name"></span>
+                            </div>
+                        </div>
                         <textarea id="task" rows="3"
                             placeholder="e.g. Analyze conversion funnel and suggest improvements.">Analyze conversion funnel and suggest improvements.</textarea>
                     </div>
 
                     <div class="field">
-                        <label for="metaData">Data Description</label>
+                        <div class="field-header">
+                            <label for="metaData">Data Description</label>
+                            <div class="field-actions">
+                                <label class="btn-mini-upload" for="metadata-file">
+                                    <input type="file" id="metadata-file" hidden accept=".txt,.md,.pdf">
+                                    📎 Add File
+                                </label>
+                                <span id="metadata-file-name" class="mini-file-name"></span>
+                            </div>
+                        </div>
                         <textarea id="metaData" rows="3"
                             placeholder="e.g. This dataset contains conversion performance metrics for different user or marketing segments.">This dataset contains conversion performance metrics for different user or marketing segments.</textarea>
                     </div>
@@ -72,6 +99,53 @@
                 <div class="status-bar" id="status-bar">
                     <span class="status-label">Status:</span>
                     <span class="status-value" id="status-value">Idle</span>
+                </div>
+
+                <div class="workflow-graph-container">
+                    <svg viewBox="0 0 600 160" class="workflow-svg">
+                        <!-- Background Edges -->
+                        <g id="edges-layer">
+                            <path id="path-supervisor-datadetective" d="M 300 35 L 100 80" class="edge hub-edge" />
+                            <path id="path-supervisor-strategist" d="M 300 35 L 250 80" class="edge hub-edge" />
+                            <path id="path-supervisor-developer" d="M 300 35 L 400 80" class="edge hub-edge" />
+                            <path id="path-supervisor-reporter" d="M 300 35 L 550 80" class="edge hub-edge" />
+
+                            <path id="path-detective-strategist" d="M 100 80 L 250 80" class="edge" />
+                            <path id="path-strategist-developer" d="M 250 80 L 400 80" class="edge" />
+                            <path id="path-developer-reporter" d="M 400 80 L 550 80" class="edge" />
+                        </g>
+
+                        <!-- Nodes -->
+                        <g class="node" id="node-supervisor">
+                            <circle cx="300" cy="35" r="20" />
+                            <text x="300" y="70">Supervisor</text>
+                        </g>
+
+                        <g class="node" id="node-datadetective">
+                            <circle cx="100" cy="80" r="18" />
+                            <text x="100" y="115">Detective</text>
+                        </g>
+
+                        <g class="node" id="node-strategist">
+                            <circle cx="250" cy="80" r="18" />
+                            <text x="250" y="115">Strategist</text>
+                        </g>
+
+                        <g class="node" id="node-developer">
+                            <circle cx="400" cy="80" r="18" />
+                            <text x="400" y="115">Developer</text>
+                        </g>
+
+                        <g class="node" id="node-reporter">
+                            <circle cx="550" cy="80" r="18" />
+                            <text x="550" y="115">Reporter</text>
+                        </g>
+
+                        <g class="node" id="node-finish">
+                            <circle cx="300" cy="130" r="12" />
+                            <text x="300" y="155">Finish</text>
+                        </g>
+                    </svg>
                 </div>
 
                 <div class="log-window" id="log-window">

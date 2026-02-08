@@ -149,18 +149,38 @@ def _profile_text(file_path: str) -> str:
 
 def detective_node(state: GraphState) -> dict:
     """Analyze files from user_input['file_paths'] and set data_profile."""
-    user_input = state.get("user_input") or {}
+    user_input = (state.get("user_input") or {}).copy()
     file_paths = user_input.get("file_paths") or []
-    task = user_input.get("task", "")
-    metaData = user_input.get("metaData", "")
+    
+    # Handle field-specific files
+    context_file = user_input.get("context_file")
+    task_file = user_input.get("task_file")
+    metadata_file = user_input.get("metadata_file")
+    
+    business_context = user_input.get("business_context") or ""
+    task = user_input.get("task") or ""
+    metaData = user_input.get("metaData") or ""
+    
+    if context_file:
+        business_context = f"[File: {Path(context_file).name}]\n{_analyze_file(context_file)}\n\n{business_context}"
+    if task_file:
+        task = f"[File: {Path(task_file).name}]\n{_analyze_file(task_file)}\n\n{task}"
+    if metadata_file:
+        metaData = f"[File: {Path(metadata_file).name}]\n{_analyze_file(metadata_file)}\n\n{metaData}"
+
+    # Update user_input with enriched data
+    user_input["business_context"] = business_context
+    user_input["task"] = task
+    user_input["metaData"] = metaData
     
     get_logger().info(
         "Agent started",
         agent="DataDetective",
         task=task[:200] + "..." if len(task) > 200 else task,
-        metaData=metaData[:200] + "..." if len(task) > 200 else metaData,
+        metaData=metaData[:200] + "..." if len(metaData) > 200 else metaData,
         file_paths=file_paths,
     )
+    
     if not file_paths:
         profile = "No file paths provided."
     else:
@@ -168,6 +188,7 @@ def detective_node(state: GraphState) -> dict:
         profile = "\n\n".join(profiles)
 
     return {
+        "user_input": user_input,
         "data_profile": metaData + '\n' + profile,
         "messages": (state.get("messages") or []) + [
             HumanMessage(content=f"DataDetective produced data_profile for {len(file_paths)} file(s).")

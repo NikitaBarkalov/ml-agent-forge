@@ -163,6 +163,37 @@ textarea::placeholder {
     color: #475569;
 }
 
+.field-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.btn-mini-upload {
+    font-size: 0.75rem;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+}
+
+.btn-mini-upload:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: var(--accent);
+}
+
+.mini-file-name {
+    font-size: 0.75rem;
+    color: var(--success);
+    margin-left: 0.5rem;
+    display: none;
+    /* Shown via JS when file present */
+}
+
 .file-row {
     display: flex;
     align-items: center;
@@ -303,6 +334,89 @@ input[type="file"]::file-selector-button:active {
 
 .log-line .level-error {
     color: var(--error);
+}
+
+/* Workflow Graph */
+.workflow-graph-container {
+    margin-bottom: 2rem;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    overflow: hidden;
+}
+
+.workflow-svg {
+    width: 100%;
+    height: auto;
+    max-height: 180px;
+}
+
+.edge {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 2;
+    transition: stroke 0.5s;
+}
+
+.edge.active {
+    stroke: var(--accent);
+    stroke-width: 3;
+    filter: drop-shadow(0 0 5px var(--accent-glow));
+}
+
+.node circle {
+    fill: var(--bg-input);
+    stroke: var(--border);
+    stroke-width: 2;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+.node text {
+    fill: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-anchor: middle;
+    font-family: 'Outfit', sans-serif;
+}
+
+.node.active circle {
+    fill: var(--accent);
+    stroke: #fff;
+    r: 22;
+    filter: drop-shadow(0 0 10px var(--accent-glow));
+}
+
+.node.active text {
+    fill: #fff;
+}
+
+.node.completed circle {
+    stroke: var(--success);
+    stroke-width: 3;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.node.active {
+    animation: pulse 2s ease-in-out infinite;
 }
 
 /* Results section */

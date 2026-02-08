@@ -132,6 +132,29 @@ async def ws_run(websocket: WebSocket):
                 if p.exists():
                     file_paths.append(str(p.resolve()))
 
+        def resolve_field_file(fname):
+            if not fname: return None
+            p = UPLOADS_DIR / fname if not Path(fname).is_absolute() else Path(fname)
+            return str(p.resolve()) if p.exists() else None
+
+        initial_state: GraphState = {
+            "messages": [],
+            "user_input": {
+                "business_context": business_context,
+                "task": task,
+                "metaData": metaData,
+                "file_paths": file_paths,
+                "context_file": resolve_field_file(data.get("context_file")),
+                "task_file": resolve_field_file(data.get("task_file")),
+                "metadata_file": resolve_field_file(data.get("metadata_file")),
+            },
+            "data_profile": "",
+            "plan": "",
+            "code_context": [],
+            "final_report": "",
+            "next_agent": "",
+        }
+
         if not file_paths:
             # Allow running without files (dummy data)
             dummy = UPLOADS_DIR / "dummy_data.csv"
@@ -140,41 +163,41 @@ async def ws_run(websocket: WebSocket):
                     "segment,visitors,conversions,rate\nA,1000,50,0.05\nB,800,120,0.15\nC,500,100,0.20\n"
                 )
             file_paths = [str(dummy.resolve())]
+            initial_state["user_input"]["file_paths"] = file_paths
 
-        loop = asyncio.get_event_loop()
-        future = loop.run_in_executor(
-            None,
-            _run_graph,
-            business_context,
-            task,
-            metaData,
-            file_paths,
-            log_queue,
-        )
+        loop = asyncio.get_running_loop()
+        
+        # Wrapper to pass the initial_state to the graph
+        def run_with_state():
+            set_log_queue(log_queue)
+            try:
+                graph = get_graph()
+                # Fresh thread_id for every run
+                config = {"configurable": {"thread_id": str(uuid.uuid4())}}
+                final_state = graph.invoke(initial_state, config=config)
+                return dict(final_state)
+            finally:
+                # Push None sentinel to indicate end of logging
+                log_queue.put(None)
+                set_log_queue(None)
+
+        future = loop.run_in_executor(None, run_with_state)
 
         # Drain log queue and send to WebSocket while graph runs
         async def drain_logs():
-            while not future.done():
-                try:
-                    ev = log_queue.get_nowait()
-                    await websocket.send_json(ev)
-                except Empty:
-                    await asyncio.sleep(0.05)
-            # Drain remaining
             while True:
                 try:
                     ev = log_queue.get_nowait()
+                    if ev is None:
+                        break # Sentinel reached
                     await websocket.send_json(ev)
                 except Empty:
-                    break
+                    if future.done() and log_queue.empty():
+                        break
+                    await asyncio.sleep(0.02)
 
-        drain_task = asyncio.create_task(drain_logs())
-        state = await future
-        drain_task.cancel()
-        try:
-            await drain_task
-        except asyncio.CancelledError:
-            pass
+        # Wait for both worker and log drainer
+        state, _ = await asyncio.gather(future, drain_logs())
 
         # Drain any final logs
         while True:
