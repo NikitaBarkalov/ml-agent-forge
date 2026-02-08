@@ -17,7 +17,11 @@ const resultsSection = document.getElementById('results-section');
 const downloadsDiv = document.getElementById('downloads');
 
 let uploadedPath = null;
-let lastActiveAgent = null; // Track the last highlighted agent to prevent unnecessary re-renders
+
+// Graph rendering state
+let lastRenderedAgent = null; // Какой агент сейчас нарисован
+let pendingAgent = null;      // Какой агент ждет отрисовки
+let isRendering = false;      // Флаг "идет отрисовка"
 
 const SCENARIOS = {
   ba: {
@@ -131,8 +135,9 @@ form.addEventListener('submit', async (e) => {
   setStatus('Connecting...', 'running');
   logContent.innerHTML = '';
   
-  // Reset the graph state on new run
-  lastActiveAgent = null; 
+  // Сброс состояния графа
+  lastRenderedAgent = null;
+  pendingAgent = null;
   highlightAgent(null);
 
   const wsUrl = `${(window.location.protocol === 'https:' ? 'wss:' : 'ws:')}//${window.location.host}${API_BASE}/ws/run`;
@@ -158,7 +163,7 @@ form.addEventListener('submit', async (e) => {
           if (data.message && data.message.includes('Agent started')) {
              setStatus(`Current Step: ${data.agent}`, 'running');
           }
-          // Highlight ONLY if the agent has changed (performance fix)
+          // Обновляем граф при каждом сообщении от агента
           highlightAgent(data.agent);
 
           if (data.reason && typeof showReasoning === 'function') {
@@ -169,7 +174,7 @@ form.addEventListener('submit', async (e) => {
         setStatus('Done', 'done');
         showResults(data.downloads || {});
         
-        // Highlight ALL agents at the end to show completion
+        // В конце подсвечиваем всё
         highlightAgent('ALL'); 
         
         runBtn.disabled = false;
@@ -197,27 +202,48 @@ form.addEventListener('submit', async (e) => {
   };
 });
 
+// === ИСПРАВЛЕННАЯ ЛОГИКА РЕНДЕРИНГА ===
+// Используем render queue + mermaid.render для устранения мерцания
+
 function highlightAgent(agentName) {
     const safeAgent = agentName ? agentName.trim() : '';
-    
-    // Performance Check: Don't re-render mermaid if the state hasn't changed.
-    if (safeAgent === lastActiveAgent) {
+    pendingAgent = safeAgent;
+    processRenderQueue();
+}
+
+async function processRenderQueue() {
+    // Если уже рисуем - выходим, следующий цикл подхватит изменение
+    if (isRendering) return;
+
+    // Если то, что хотим нарисовать, уже на экране - ничего не делаем
+    if (pendingAgent === lastRenderedAgent) {
+        pendingAgent = null; // Сбрасываем pending, чтобы не копить
         return;
     }
     
-    lastActiveAgent = safeAgent;
-    updateGraphUI(safeAgent); 
+    isRendering = true;
+    const agentToRender = pendingAgent;
+
+    try {
+        await updateGraphUI(agentToRender);
+        lastRenderedAgent = agentToRender;
+    } catch (e) {
+        console.error("Graph render failed:", e);
+    } finally {
+        isRendering = false;
+        
+        
+        if (pendingAgent !== lastRenderedAgent) {
+            processRenderQueue();
+        }
+    }
 }
-let isRendering = false;
 
 async function updateGraphUI(activeAgent) {
-    if (isRendering) return; // Защита от наслоения рендеров
-    
     const element = document.getElementById('agent-graph');
     if (!element) return;
     
-    isRendering = true;
-
+    
     let graphDefinition = `
     graph TD
         Start((Start)) --> Supervisor
@@ -236,6 +262,7 @@ async function updateGraphUI(activeAgent) {
         classDef active fill:#238636,stroke:#3fb950,stroke-width:3px,color:#ffffff
     `;
     
+    
     if (activeAgent === 'ALL') {
         graphDefinition += `\nclass Start,Supervisor,DataDetective,Strategist,Developer,Reporter,End active`;
     } else if (activeAgent) {
@@ -243,12 +270,16 @@ async function updateGraphUI(activeAgent) {
     }
 
     try {
-        element.removeAttribute('data-processed');
-        element.textContent = graphDefinition; 
-        await mermaid.run({ nodes: [element] });
+        
+        const id = 'mermaid-graph-' + Date.now();
+        
+
+        const { svg } = await mermaid.render(id, graphDefinition);
+        
+        
+        element.innerHTML = svg;
+        
     } catch (err) {
         console.error("Mermaid render error:", err);
-    } finally {
-        isRendering = false;
     }
 }
