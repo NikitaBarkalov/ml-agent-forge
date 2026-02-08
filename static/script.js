@@ -138,6 +138,13 @@ function updateGraph(activeAgent) {
 
   console.log(`[Graph] Update: "${agentName}" -> ID: "node-${normalizedAgent}"`);
 
+  // Update Agent Dashboard (Premium Feedback)
+  const thoughtBubble = document.getElementById('agent-thought-bubble');
+
+  if (thoughtBubble) {
+    thoughtBubble.classList.remove('hidden');
+  }
+
   // 1. Reset all nodes
   document.querySelectorAll('.node').forEach(node => {
     node.classList.remove('active');
@@ -173,12 +180,25 @@ function appendLog(ev) {
   const line = document.createElement('div');
   line.className = 'log-line';
 
-  const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString() : '';
-  const agent = ev.agent ? `[${ev.agent}]` : '';
+  const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString([], { hour12: false }) : '--:--:--';
+  const agent = ev.agent || 'System';
+  const normalizedAgent = agent.toLowerCase().replace(/[^a-z0-9]/g, '');
   const msg = ev.message || JSON.stringify(ev);
   const level = ev.level || 'info';
 
-  line.innerHTML = `<span class="ts">${ts}</span> <span class="agent">${agent}</span> <span class="level-${level}">${msg}</span>`;
+  // Update thought bubble if it's a significant message (Premium Interaction)
+  const thoughtContent = document.getElementById('thought-content');
+  if (thoughtContent && ev.agent) {
+    if (msg.includes('Agent started')) {
+      thoughtContent.textContent = `Starting ${ev.agent} phase...`;
+    } else if (msg.length > 10 && (msg.includes('produced') || msg.includes('LLM response') || msg.includes('Executing'))) {
+      // Clean up technical logs for the thought bubble
+      const cleanMsg = msg.replace(/\[.*?\]/g, '').split('\n')[0].trim();
+      thoughtContent.textContent = cleanMsg.length > 100 ? cleanMsg.substring(0, 97) + '...' : cleanMsg;
+    }
+  }
+
+  line.innerHTML = `<span class="ts">${ts}</span> <span class="agent agent-${normalizedAgent}">[${agent}]</span> <span class="level-${level}">${msg}</span>`;
   pre.appendChild(line);
   const logWindow = document.getElementById('log-window');
   if (logWindow) logWindow.scrollTop = logWindow.scrollHeight;
@@ -244,6 +264,11 @@ async function showResults(downloads) {
       };
 
       reportContainer.innerHTML = marked.parse(markdown, { renderer });
+
+      // Apply Prism highlighting to the newly rendered report content
+      if (window.Prism) {
+        Prism.highlightAllUnder(reportContainer);
+      }
     } catch (e) {
       reportContainer.innerHTML = `<p class="error">Failed to load report: ${e.message}</p>`;
     }
@@ -289,12 +314,17 @@ form.addEventListener('submit', async (e) => {
   setStatus('Connecting...', 'running');
   logContent.innerHTML = '';
 
-  // Reset Graph
+  // Reset Graph & UI (Premium Reset)
   document.querySelectorAll('.node').forEach(node => {
     node.classList.remove('active');
     node.classList.remove('completed');
   });
   document.querySelectorAll('.edge').forEach(edge => edge.classList.remove('active'));
+
+  const thoughtBubble = document.getElementById('agent-thought-bubble');
+  if (thoughtBubble) thoughtBubble.classList.add('hidden');
+  const thoughtContent = document.getElementById('thought-content');
+  if (thoughtContent) thoughtContent.textContent = 'Initializing mission...';
 
   const wsUrl = `${(window.location.protocol === 'https:' ? 'wss:' : 'ws:')}//${window.location.host}${API_BASE}/ws/run`;
   const ws = new WebSocket(wsUrl);

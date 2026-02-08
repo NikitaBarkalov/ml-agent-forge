@@ -96,9 +96,16 @@
 
             <section class="card progress-section" id="progress-section">
                 <h2>Live Progress</h2>
-                <div class="status-bar" id="status-bar">
-                    <span class="status-label">Status:</span>
-                    <span class="status-value" id="status-value">Idle</span>
+                <div class="progress-info-row">
+                    <div class="status-bar" id="status-bar">
+                        <span class="status-label">Status:</span>
+                        <span class="status-value" id="status-value">Idle</span>
+                    </div>
+                </div>
+
+                <div class="agent-thought-container hidden" id="agent-thought-bubble">
+                    <div class="thought-header">Current Action</div>
+                    <div class="thought-content" id="thought-content">Waiting for mission start...</div>
                 </div>
 
                 <div class="workflow-graph-container">
