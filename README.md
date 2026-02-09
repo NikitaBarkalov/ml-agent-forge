@@ -59,6 +59,57 @@ The system acts as an **autonomous data scientists team**, capable of understand
 
 The core architecture follows a **Centralized Supervisor Pattern (Hub-and-Spoke)** implemented via **LangGraph**.
 
+```mermaid
+%%{ init: { 'themeVariables': { 'fontFamily': 'Inter, Roboto, Arial', 'curve': 'monotoneX' } } }%%
+flowchart TD
+    %% Classes for style  
+    classDef supervisor fill:#eba134,stroke:#3c2f17,stroke-width:3px,color:#2d1909;
+    classDef agent fill:#b3d9ff,stroke:#26415e,stroke-width:2px,color:#12395b;
+    classDef state fill:#fff8dc,stroke:#bb8b2a,stroke-width:2px,stroke-dasharray:6 5,color:#2c2312;
+    classDef terminal fill:#b6eab4,stroke:#205221,stroke-width:3px,color:#265426;
+    classDef user fill:#fff,stroke:#6183e2,stroke-width:3px,color:#26415e;
+
+    %% Main nodes with distinctive shapes, labels and (optional) icons
+    User["User Input<br/>Context + Data"]:::user
+    End["Final Report<br/>& Artifacts"]:::terminal
+
+    subgraph S1["s1"]
+      direction TB
+
+      Supervisor["<b>Supervisor</b><br/>Orchestrator"]:::supervisor
+      
+      subgraph S2["s2"]
+        direction TB
+        Detective["<b>Detective</b>"]:::agent
+        Strategist["<b>Strategist</b>"]:::agent
+        Developer["<b>Developer</b>"]:::agent
+        Reporter["<b>Reporter</b>"]:::agent
+      end
+    end
+
+    %% Shared State moved outside and centered below
+    State{{"Shared GraphState<br/>Memory"}}:::state
+
+    %% Main process (thicker arrows)
+    User ==> Supervisor
+    Supervisor ==>|1. Analyze| Detective
+    Detective ==>|Back| Supervisor
+    Supervisor ==>|2. Plan| Strategist
+    Strategist ==>|Back| Supervisor
+    Supervisor ==>|3. Execute| Developer
+    Developer ==>|Back| Supervisor
+    Supervisor ==>|4. Report| Reporter
+    Reporter ==>|Back| Supervisor
+    Supervisor ==> End
+
+    %% Connect State node from all main actors (elegant dotted lines)
+    Detective -.-> State
+    Strategist -.-> State
+    Developer -.-> State
+    Reporter -.-> State
+    Supervisor -.-> State
+```
+
 #### 2.1. The Orchestration Layer (The Graph)
 The workflow is not linear but dynamic. A central **Supervisor** node acts as the router and state manager. It decides which specialist agent should act next based on the current state of the investigation and the user's initial request.
 
