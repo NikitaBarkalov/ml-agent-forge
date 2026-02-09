@@ -12,7 +12,7 @@
 
 2. Duplicate the space and add your API keys into the corresponded fields
 
-3. Add data and prompts and click `Run pipeline` (samples of data with prompts are included in `\data` directory)
+3. Add data and prompts and click `Run pipeline` (samples of data with templates of prompts are included in `\test_data` directory)
 
 ### b) Running locally
 
@@ -45,7 +45,7 @@
     task demoweb
     ```
 
-7. Add data and prompts and click `Run pipeline` (samples of data with prompts are included in `\data` directory)
+7. Add data and prompts and click `Run pipeline` (samples of data with templates of prompts are included in `\test_data` directory)
 
 8. Output data will be added to the `\outputs` directory
 
