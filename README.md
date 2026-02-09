@@ -89,13 +89,13 @@ flowchart TD
     %% Main process (thicker arrows)
     User ==> Supervisor
     Supervisor ==>|Analyze| Detective
-    Detective ==>|Back| Supervisor
+    Detective ==> Supervisor
     Supervisor ==>|Plan| Strategist
-    Strategist ==>|Back| Supervisor
+    Strategist ==> Supervisor
     Supervisor ==>|Execute| Developer
-    Developer ==>|Back| Supervisor
+    Developer ==> Supervisor
     Supervisor ==>|Report| Reporter
-    Reporter ==>|Back| Supervisor
+    Reporter ==> Supervisor
     Supervisor ==> End
 
     %% Connect State node from all main actors (elegant dotted lines)
