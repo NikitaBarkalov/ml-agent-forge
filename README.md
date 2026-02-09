@@ -73,12 +73,12 @@ flowchart TD
     User["User Input<br/>Context + Data"]:::user
     End["Final Report<br/>& Artifacts"]:::terminal
 
-    subgraph S1
+    subgraph
       direction TB
 
       Supervisor["<b>Supervisor</b><br/>Orchestrator"]:::supervisor
       
-      subgraph S2
+      subgraph
         direction TB
         Detective["<b>Detective</b>"]:::agent
         Strategist["<b>Strategist</b>"]:::agent
