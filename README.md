@@ -32,22 +32,20 @@
     uv sync
     ```
 
-4. Add a file `.env` in the root of a directory
-
-5. Fill the file `.env` in the following way using your API keys:
+4. Add the file `.env` in the root of the directory with your API keys:
     ```
     ANTHROPIC_API_KEY=sk-ant...
     E2B_API_KEY=e2b_...
     ```
 
-6. Run in the terminal:
+5. Run in the terminal:
     ```bash
     task demoweb
     ```
 
-7. Add data and prompts and click `Run pipeline` (samples of data with templates of prompts are included in `\test_data` directory)
+6. Add data and prompts and click `Run pipeline` (samples of data with templates of prompts are included in `\test_data` directory)
 
-8. Output data will be added to the `\outputs` directory
+7. Output data will be added to the `\outputs` directory
 
 
 ## Architecture Overview
