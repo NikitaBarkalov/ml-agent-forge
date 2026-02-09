@@ -73,19 +73,15 @@ flowchart TD
     User["User Input<br/>Context + Data"]:::user
     End["Final Report<br/>& Artifacts"]:::terminal
 
-    subgraph
-      direction TB
+    direction TB
 
-      Supervisor["<b>Supervisor</b><br/>Orchestrator"]:::supervisor
-      
-      subgraph
-        direction TB
-        Detective["<b>Detective</b>"]:::agent
-        Strategist["<b>Strategist</b>"]:::agent
-        Developer["<b>Developer</b>"]:::agent
-        Reporter["<b>Reporter</b>"]:::agent
-      end
-    end
+    Supervisor["<b>Supervisor</b><br/>Orchestrator"]:::supervisor
+    
+    direction TB
+    Detective["<b>Detective</b>"]:::agent
+    Strategist["<b>Strategist</b>"]:::agent
+    Developer["<b>Developer</b>"]:::agent
+    Reporter["<b>Reporter</b>"]:::agent
 
     %% Shared State moved outside and centered below
     State{{"Shared GraphState<br/>Memory"}}:::state
