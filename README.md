@@ -73,12 +73,12 @@ flowchart TD
     User["User Input<br/>Context + Data"]:::user
     End["Final Report<br/>& Artifacts"]:::terminal
 
-    subgraph S1["s1"]
+    subgraph S1
       direction TB
 
       Supervisor["<b>Supervisor</b><br/>Orchestrator"]:::supervisor
       
-      subgraph S2["s2"]
+      subgraph S2
         direction TB
         Detective["<b>Detective</b>"]:::agent
         Strategist["<b>Strategist</b>"]:::agent
@@ -92,13 +92,13 @@ flowchart TD
 
     %% Main process (thicker arrows)
     User ==> Supervisor
-    Supervisor ==>|1. Analyze| Detective
+    Supervisor ==>|Analyze| Detective
     Detective ==>|Back| Supervisor
-    Supervisor ==>|2. Plan| Strategist
+    Supervisor ==>|Plan| Strategist
     Strategist ==>|Back| Supervisor
-    Supervisor ==>|3. Execute| Developer
+    Supervisor ==>|Execute| Developer
     Developer ==>|Back| Supervisor
-    Supervisor ==>|4. Report| Reporter
+    Supervisor ==>|Report| Reporter
     Reporter ==>|Back| Supervisor
     Supervisor ==> End
 
