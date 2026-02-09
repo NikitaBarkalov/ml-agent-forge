@@ -1,0 +1,3 @@
+Create an automated solution that allows our investment analysts to estimate the fair market value of a house simply by inputting its characteristics.
+
+We need to know which features (e.g., location, size, quality) have the biggest impact on the price, so we don't overpay for features that the market doesn't value. The goal is to minimize our risk of bad investments by having an objective, data-driven price estimate.

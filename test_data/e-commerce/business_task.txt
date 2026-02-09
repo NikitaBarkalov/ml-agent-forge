@@ -1,0 +1,3 @@
+Analyze our transaction history to segment our customer base based on their purchasing behavior. We need to clearly identify who our most valuable clients are versus those who are one-time buyers.
+
+Additionally, help us understand our sales trends and product performance to improve our inventory planning. The goal is to give our marketing team a clear picture of who to target and when.
