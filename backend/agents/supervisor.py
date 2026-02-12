@@ -11,8 +11,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 # except ImportError:
 from pydantic import BaseModel, Field
 
-from src.ml_agent_forge.state import GraphState
-from src.ml_agent_forge.utils.logger import truncate_for_log
+from backend.state import GraphState
+from backend.utils.logger import truncate_for_log
 
 
 class SupervisorDecision(BaseModel):

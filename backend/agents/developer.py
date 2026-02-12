@@ -9,8 +9,8 @@ from structlog import get_logger
 from langchain_core.messages import HumanMessage, SystemMessage
 from e2b_code_interpreter import Sandbox
 
-from src.ml_agent_forge.state import GraphState
-from src.ml_agent_forge.utils.logger import truncate_for_log
+from backend.state import GraphState
+from backend.utils.logger import truncate_for_log
 
 MAX_CORRECTION_ATTEMPTS = 3
 SANDBOX_DATA_DIR = "/home/user/data"

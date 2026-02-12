@@ -11,9 +11,9 @@ from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSock
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from src.ml_agent_forge.graph import get_graph
-from src.ml_agent_forge.state import GraphState
-from src.ml_agent_forge.utils.logger import configure_logging, get_logger, set_log_queue
+from backend.graph import get_graph
+from backend.state import GraphState
+from backend.utils.logger import configure_logging, get_logger, set_log_queue
 
 load_dotenv()
 
@@ -244,8 +244,8 @@ async def download_file(path: str):
 
 
 # Static files path (project root / static)
-_project_root = Path(__file__).resolve().parent.parent.parent
-static_dir = _project_root / "static"
+_project_root = Path(__file__).resolve().parent.parent #.parent
+static_dir = _project_root / "frontend" / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
@@ -253,7 +253,9 @@ if static_dir.exists():
 @app.get("/")
 async def root():
     """Serve the main UI."""
+    print(static_dir)
     index_path = static_dir / "index.html"
+    print(index_path)
     if index_path.exists():
         return FileResponse(index_path)
     return {"message": "ML Agent Forge API. Serve static/index.html for the UI."}

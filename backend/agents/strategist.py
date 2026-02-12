@@ -6,8 +6,8 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from structlog import get_logger
 
-from src.ml_agent_forge.state import GraphState
-from src.ml_agent_forge.utils.logger import truncate_for_log
+from backend.state import GraphState
+from backend.utils.logger import truncate_for_log
 
 
 def _get_llm():

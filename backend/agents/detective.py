@@ -6,7 +6,7 @@ from pathlib import Path
 from structlog import get_logger
 from langchain_core.messages import HumanMessage
 
-from src.ml_agent_forge.state import GraphState
+from backend.state import GraphState
 
 
 def _analyze_file(file_path: str) -> str:

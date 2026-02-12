@@ -4,4 +4,4 @@ tasks:
   demoweb:
     desc: "Run the web application"
     cmds:
-      - uv run python -m src.ml_agent_forge.server
+      - uv run python -m backend.server

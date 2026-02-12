@@ -6,8 +6,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from src.ml_agent_forge.graph import get_graph
-from src.ml_agent_forge.state import GraphState
+from backend.graph import get_graph
+from backend.state import GraphState
 
 load_dotenv()
 
@@ -40,7 +40,7 @@ def run(
 
 
 def main():
-    from src.ml_agent_forge.utils.logger import configure_logging, get_logger
+    from backend.utils.logger import configure_logging, get_logger
 
     configure_logging()
     log = get_logger()

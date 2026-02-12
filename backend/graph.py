@@ -3,8 +3,8 @@
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 
-from src.ml_agent_forge.state import GraphState
-from src.ml_agent_forge.agents import (
+from backend.state import GraphState
+from backend.agents import (
     supervisor_node,
     detective_node,
     strategist_node,
