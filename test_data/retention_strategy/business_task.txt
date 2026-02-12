@@ -1,0 +1,3 @@
+We need a mechanism to predict which current customers are likely to leave the company in the near future.
+
+More importantly, we need to understand why they are leaving. Is it the price? The service quality? Please analyze the data to find the root causes of churn and identify the specific customers we should prioritize for retention offers to save the most revenue.

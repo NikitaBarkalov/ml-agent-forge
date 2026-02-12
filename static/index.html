@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoVibe Solver</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</head>
+
+<body>
+    <div class="app">
+        <header class="header">
+            <h1>NeoVibe Solver</h1>
+            <p class="tagline">Multi-agent ML & Business Analysis Pipeline</p>
+        </header>
+
+        <main class="main">
+            <section class="card input-section">
+                <div class="card-header-row">
+                    <h2>Input</h2>
+                    <div class="template-selector">
+                        <label for="scenario-select">Quick Scenarios:</label>
+                        <select id="scenario-select">
+                            <option value="">-- Choose a scenario --</option>
+                            <option value="ba">BA: Product Expansion</option>
+                            <option value="da">DA: Profit EDA</option>
+                            <option value="ml">ML: Sales Forecasting</option>
+                        </select>
+                    </div>
+                </div>
+                <form id="run-form">
+                    <div class="field">
+                        <div class="field-header">
+                            <label for="business-context">Business Context</label>
+                            <div class="field-actions">
+                                <label class="btn-mini-upload" for="context-file">
+                                    <input type="file" id="context-file" hidden accept=".txt,.md,.pdf">
+                                    📎 Add File
+                                </label>
+                                <span id="context-file-name" class="mini-file-name"></span>
+                            </div>
+                        </div>
+                        <textarea id="business-context" rows="3"
+                            placeholder="e.g. E-commerce conversion analysis for a retail platform...">E-commerce conversion analysis</textarea>
+                    </div>
+                    <div class="field">
+                        <div class="field-header">
+                            <label for="task">Task</label>
+                            <div class="field-actions">
+                                <label class="btn-mini-upload" for="task-file">
+                                    <input type="file" id="task-file" hidden accept=".txt,.md,.pdf">
+                                    📎 Add File
+                                </label>
+                                <span id="task-file-name" class="mini-file-name"></span>
+                            </div>
+                        </div>
+                        <textarea id="task" rows="3"
+                            placeholder="e.g. Analyze conversion funnel and suggest improvements.">Analyze conversion funnel and suggest improvements.</textarea>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-header">
+                            <label for="metaData">Data Description</label>
+                            <div class="field-actions">
+                                <label class="btn-mini-upload" for="metadata-file">
+                                    <input type="file" id="metadata-file" hidden accept=".txt,.md,.pdf">
+                                    📎 Add File
+                                </label>
+                                <span id="metadata-file-name" class="mini-file-name"></span>
+                            </div>
+                        </div>
+                        <textarea id="metaData" rows="3"
+                            placeholder="e.g. This dataset contains conversion performance metrics for different user or marketing segments.">This dataset contains conversion performance metrics for different user or marketing segments.</textarea>
+                    </div>
+
+                    <div class="field">
+                        <label for="file-input">Dataset (CSV or Excel)</label>
+                        <div class="file-row">
+                            <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.json,.parquet,.pdf,.txt,.zip">
+                            <span id="file-name" class="file-name">No file selected</span>
+                        </div>
+                    </div>
+                    <button type="submit" id="run-btn" class="btn btn-primary">Run Pipeline</button>
+                </form>
+            </section>
+
+            <section class="card progress-section" id="progress-section">
+                <h2>Live Progress</h2>
+                <div class="progress-info-row">
+                    <div class="status-bar" id="status-bar">
+                        <span class="status-label">Status:</span>
+                        <span class="status-value" id="status-value">Idle</span>
+                    </div>
+                </div>
+
+                <div class="agent-thought-container hidden" id="agent-thought-bubble">
+                    <div class="thought-header">Current Action</div>
+                    <div class="thought-content" id="thought-content">Waiting for mission start...</div>
+                </div>
+
+                <div class="workflow-graph-container">
+                    <svg viewBox="0 0 600 160" class="workflow-svg">
+                        <!-- Background Edges -->
+                        <g id="edges-layer">
+                            <path id="path-supervisor-datadetective" d="M 300 35 L 120 80" class="edge hub-edge" />
+                            <path id="path-supervisor-strategist" d="M 300 35 L 240 80" class="edge hub-edge" />
+                            <path id="path-supervisor-developer" d="M 300 35 L 360 80" class="edge hub-edge" />
+                            <path id="path-supervisor-reporter" d="M 300 35 L 480 80" class="edge hub-edge" />
+
+                            <path id="path-detective-strategist" d="M 120 80 L 240 80" class="edge" />
+                            <path id="path-strategist-developer" d="M 240 80 L 360 80" class="edge" />
+                            <path id="path-developer-reporter" d="M 360 80 L 480 80" class="edge" />
+                        </g>
+
+                        <!-- Nodes -->
+                        <g class="node" id="node-supervisor">
+                            <circle cx="300" cy="35" r="20" />
+                            <text x="300" y="70">Supervisor</text>
+                        </g>
+
+                        <g class="node" id="node-datadetective">
+                            <circle cx="120" cy="80" r="18" />
+                            <text x="120" y="115">Detective</text>
+                        </g>
+
+                        <g class="node" id="node-strategist">
+                            <circle cx="240" cy="80" r="18" />
+                            <text x="240" y="115">Strategist</text>
+                        </g>
+
+                        <g class="node" id="node-developer">
+                            <circle cx="360" cy="80" r="18" />
+                            <text x="360" y="115">Developer</text>
+                        </g>
+
+                        <g class="node" id="node-reporter">
+                            <circle cx="480" cy="80" r="18" />
+                            <text x="480" y="115">Reporter</text>
+                        </g>
+
+                        <g class="node" id="node-finish">
+                            <circle cx="300" cy="130" r="12" />
+                            <text x="300" y="155">Finish</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <div class="log-window" id="log-window">
+                    <pre id="log-content"></pre>
+                </div>
+            </section>
+
+            <section class="card results-section hidden" id="results-section">
+                <div class="results-header">
+                    <div class="header-main">
+                        <h2>Final Results</h2>
+                        <div class="downloads-compact" id="downloads"></div>
+                    </div>
+                    <div class="toggle-group">
+                        <button id="toggle-report" class="btn btn-toggle active">Report</button>
+                        <button id="toggle-code" class="btn btn-toggle">View Code</button>
+                    </div>
+                </div>
+
+                <div id="report-view">
+                    <div id="report-container" class="report-content"></div>
+                </div>
+
+                <div id="code-view" class="hidden">
+                    <pre class="line-numbers"><code id="code-container" class="language-python"></code></pre>
+                </div>
+
+            </section>
+        </main>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+
+</html>
